@@ -20,6 +20,7 @@ $routes = [
     'lead_timeline' => 'LeadTimelineController',
     'projects' => 'ProjectController',
     'prospeccao' => 'ProspeccaoController',
+    'agenda' => 'AgendaController',
     'kpis' => 'KpiController',
     'playbook' => 'PlaybookController'
 ];

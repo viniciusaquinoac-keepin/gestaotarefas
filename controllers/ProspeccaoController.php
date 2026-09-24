@@ -20,20 +20,25 @@ class ProspeccaoController {
         // Buscar leads
         $allLeads = ProspeccaoLead::getAll($empresa, $vendedorFiltro);
 
-        // Agrupar leads por etapa do funil
+        // Agrupar leads por etapa do funil (seguindo a ordem do resumo semanal)
         $etapas = [
-            'Abordagem/Rua' => [],
+            'Prospeccao' => [],
+            'Abordagem' => [],
             'Diagnostico' => [],
+            'Apresentacao' => [],
             'Proposta' => [],
-            'Negociacao' => [],
             'Fechado' => [],
             'Perdido' => []
         ];
 
         foreach ($allLeads as $lead) {
             $etapa = $lead['etapa_funil'];
+            // Compatibilidade com etapas antigas
+            if ($etapa === 'Abordagem/Rua') $etapa = 'Abordagem';
+            if ($etapa === 'Negociacao') $etapa = 'Proposta';
+
             if (!isset($etapas[$etapa])) {
-                $etapas['Abordagem/Rua'][] = $lead;
+                $etapas['Prospeccao'][] = $lead;
             } else {
                 $etapas[$etapa][] = $lead;
             }
@@ -136,6 +141,15 @@ class ProspeccaoController {
             $userId = $_SESSION['user_id'];
 
             ProspeccaoLead::updateEtapa($id, $novaEtapa, $motivoPerda, $motivoPerdaObs, $dataRecontato, $userId);
+
+            // Se o usuário informou data e hora para agendar na semana
+            if (!empty($_POST['data_agendada']) && !empty($_POST['horario_agendado'])) {
+                $dataAgendada = $_POST['data_agendada'];
+                $horarioAgendado = $_POST['horario_agendado'];
+                $tipoAtividade = !empty($_POST['tipo_atividade']) ? $_POST['tipo_atividade'] : $novaEtapa;
+                $obsAtividade = $_POST['obs_atividade'] ?? '';
+                ProspeccaoLead::agendarAtividade($id, $dataAgendada, $horarioAgendado, $tipoAtividade, $obsAtividade, $userId);
+            }
 
             if (!empty($_POST['is_ajax'])) {
                 header('Content-Type: application/json');

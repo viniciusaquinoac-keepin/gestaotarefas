@@ -73,10 +73,11 @@ $totalLeads = count($allLeads);
 <div class="row g-3 flex-nowrap overflow-x-auto pb-4" style="min-height: 650px;">
     <?php
     $colunasConfig = [
-        'Abordagem/Rua' => ['titulo' => 'Abordagem / Campo', 'cor' => 'secondary', 'icon' => 'bi-geo-alt'],
-        'Diagnostico' => ['titulo' => 'Diagnóstico (SPIN)', 'cor' => 'info', 'icon' => 'bi-search'],
-        'Proposta' => ['titulo' => 'Proposta Técnica', 'cor' => 'warning', 'icon' => 'bi-file-earmark-text'],
-        'Negociacao' => ['titulo' => 'Em Negociação', 'cor' => 'primary', 'icon' => 'bi-chat-dots'],
+        'Prospeccao' => ['titulo' => 'Prospecção (Ligações)', 'cor' => 'info', 'icon' => 'bi-telephone'],
+        'Abordagem' => ['titulo' => 'Abordagem / Campo', 'cor' => 'primary', 'icon' => 'bi-geo-alt'],
+        'Diagnostico' => ['titulo' => 'Diagnóstico (SPIN Opcional)', 'cor' => 'secondary', 'icon' => 'bi-search'],
+        'Apresentacao' => ['titulo' => 'Apresentação / Reunião', 'cor' => 'warning', 'icon' => 'bi-easel2'],
+        'Proposta' => ['titulo' => 'Proposta Enviada', 'cor' => 'purple', 'icon' => 'bi-file-earmark-text', 'customBg' => 'background-color:#6f42c1 !important; color:#fff !important;'],
         'Fechado' => ['titulo' => 'Fechado / Ganho 🎉', 'cor' => 'success', 'icon' => 'bi-trophy-fill'],
         'Perdido' => ['titulo' => 'Perdido / Insucesso', 'cor' => 'danger', 'icon' => 'bi-x-circle']
     ];
@@ -90,7 +91,7 @@ $totalLeads = count($allLeads);
         <div class="card bg-dark border-secondary h-100 shadow-sm">
             <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center py-2">
                 <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-<?= $cfg['cor'] ?> bg-opacity-25 text-<?= $cfg['cor'] ?> border border-<?= $cfg['cor'] ?>">
+                    <span class="badge bg-<?= $cfg['cor'] ?> bg-opacity-25 text-<?= $cfg['cor'] ?> border border-<?= $cfg['cor'] ?>" style="<?= $cfg['customBg'] ?? '' ?>">
                         <i class="bi <?= $cfg['icon'] ?>"></i>
                     </span>
                     <strong class="text-light small"><?= $cfg['titulo'] ?></strong>
@@ -179,6 +180,14 @@ $totalLeads = count($allLeads);
                                 </div>
                             <?php endif; ?>
 
+                            <!-- Próximo Agendamento na Semana (se houver) -->
+                            <?php if (!empty($lead['prox_agendamento'])): ?>
+                                <div class="bg-info bg-opacity-10 border border-info rounded p-1 px-2 small text-light mb-2 d-flex justify-content-between align-items-center" style="font-size: 0.74rem;">
+                                    <span class="text-truncate me-1"><i class="bi bi-calendar-event text-info me-1"></i><strong><?= htmlspecialchars($lead['prox_agendamento_tipo'] ?? 'Agendado') ?>:</strong> <?= htmlspecialchars($lead['prox_agendamento']) ?></span>
+                                    <a href="<?= BASE_URL ?>/?page=agenda" class="badge bg-info text-dark text-decoration-none" title="Ver na Agenda da Semana">Ver</a>
+                                </div>
+                            <?php endif; ?>
+
                             <?= $prazoBadge ?>
 
                             <hr class="border-secondary my-2">
@@ -196,15 +205,15 @@ $totalLeads = count($allLeads);
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary p-1 px-2" data-bs-toggle="dropdown" title="Mover Etapa">
+                                        <button class="btn btn-sm btn-outline-secondary p-1 px-2" data-bs-toggle="dropdown" title="Mover Etapa & Agendar na Semana">
                                             <i class="bi bi-arrow-right-circle"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                                            <li><h6 class="dropdown-header">Mover para:</h6></li>
+                                            <li><h6 class="dropdown-header">Mover & Agendar Atividade:</h6></li>
                                             <?php foreach ($colunasConfig as $targetEtapa => $tCfg): ?>
                                                 <?php if ($targetEtapa !== $etapaChave): ?>
                                                     <li>
-                                                        <button class="dropdown-item small" onclick="moverLead(<?= $lead['id'] ?>, '<?= $targetEtapa ?>', '<?= htmlspecialchars($lead['empresa_alvo']) ?>')">
+                                                        <button class="dropdown-item small" onclick='abrirModalMoverLead(<?= htmlspecialchars(json_encode($lead)) ?>, "<?= $targetEtapa ?>")'>
                                                             <i class="bi <?= $tCfg['icon'] ?> text-<?= $tCfg['cor'] ?> me-1"></i> <?= $tCfg['titulo'] ?>
                                                         </button>
                                                     </li>
@@ -343,10 +352,11 @@ $totalLeads = count($allLeads);
                         <div class="col-md-4">
                             <label class="form-label small">Etapa Inicial</label>
                             <select name="etapa_funil" class="form-select bg-dark text-light border-secondary">
-                                <option value="Abordagem/Rua">Abordagem / Rua</option>
-                                <option value="Diagnostico">Diagnóstico (SPIN)</option>
-                                <option value="Proposta">Proposta Técnica</option>
-                                <option value="Negociacao">Em Negociação</option>
+                                <option value="Prospeccao" selected>Prospeccao (Ligações / Contatos)</option>
+                                <option value="Abordagem">Abordagem / Campo</option>
+                                <option value="Diagnostico">Diagnóstico (SPIN Opcional)</option>
+                                <option value="Apresentacao">Apresentação / Reunião</option>
+                                <option value="Proposta">Proposta Enviada</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -365,10 +375,11 @@ $totalLeads = count($allLeads);
                         </div>
                     </div>
 
-                    <!-- Diagnóstico SPIN Selling -->
+                    <!-- Diagnóstico SPIN Selling (Opcional) -->
                     <div class="card bg-secondary bg-opacity-10 border-secondary mb-3">
-                        <div class="card-header bg-transparent border-secondary py-2">
-                            <strong class="text-info small"><i class="bi bi-lightbulb"></i> Diagnóstico SPIN Selling (Qualificação Técnica)</strong>
+                        <div class="card-header bg-transparent border-secondary py-2 d-flex justify-content-between align-items-center">
+                            <strong class="text-info small"><i class="bi bi-lightbulb"></i> Diagnóstico SPIN Selling (100% Opcional)</strong>
+                            <span class="badge bg-secondary">Preenchimento Flexível</span>
                         </div>
                         <div class="card-body p-3">
                             <div class="row g-2">
@@ -602,11 +613,12 @@ $totalLeads = count($allLeads);
                         <div class="col-md-6">
                             <label class="form-label small">Etapa do Funil</label>
                             <select name="etapa_funil" id="edit_etapa_funil" class="form-select bg-dark text-light border-secondary">
-                                <option value="Abordagem/Rua">Abordagem / Rua</option>
+                                <option value="Prospeccao">Prospecção (Ligações / Contatos)</option>
+                                <option value="Abordagem">Abordagem / Campo</option>
                                 <option value="Diagnostico">Diagnóstico (SPIN)</option>
-                                <option value="Proposta">Proposta Técnica</option>
-                                <option value="Negociacao">Em Negociação</option>
-                                <option value="Fechado">Fechado / Ganho</option>
+                                <option value="Apresentacao">Apresentação / Reunião</option>
+                                <option value="Proposta">Proposta Enviada</option>
+                                <option value="Fechado">Fechado / Ganho 🎉</option>
                                 <option value="Perdido">Perdido / Insucesso</option>
                             </select>
                         </div>
@@ -616,10 +628,11 @@ $totalLeads = count($allLeads);
                         </div>
                     </div>
 
-                    <!-- SPIN Selling -->
+                    <!-- SPIN Selling (Opcional) -->
                     <div class="card bg-secondary bg-opacity-10 border-secondary mb-3">
-                        <div class="card-header bg-transparent border-secondary py-2">
-                            <strong class="text-info small"><i class="bi bi-lightbulb"></i> Diagnóstico SPIN Selling</strong>
+                        <div class="card-header bg-transparent border-secondary py-2 d-flex justify-content-between align-items-center">
+                            <strong class="text-info small"><i class="bi bi-lightbulb"></i> Diagnóstico SPIN Selling (100% Opcional)</strong>
+                            <span class="badge bg-secondary">Preenchimento Flexível</span>
                         </div>
                         <div class="card-body p-3">
                             <div class="row g-2">
@@ -709,7 +722,140 @@ $totalLeads = count($allLeads);
     </div>
 </div>
 
+<!-- ========================================================================= -->
+<!-- MODAL MOVER LEAD & AGENDAR NA SEMANA -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="modalMoverAgendarLead" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light border-warning">
+            <form action="<?= BASE_URL ?>/?page=prospeccao&action=update_etapa" method="POST">
+                <input type="hidden" name="lead_id" id="agendar_lead_id">
+                <input type="hidden" name="empresa_alvo" id="agendar_empresa_alvo">
+
+                <div class="modal-header border-warning bg-warning bg-opacity-25">
+                    <h5 class="modal-title text-warning"><i class="bi bi-calendar-plus me-1"></i> Mover Card & Agendar na Semana</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-light mb-3">Cliente: <strong id="agendar_cliente_nome" class="text-info fs-6"></strong></p>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Mover para a Etapa:</label>
+                        <select name="etapa" id="agendar_nova_etapa" class="form-select bg-dark text-light border-secondary" required onchange="aoMudarEtapaAgendamento(this.value)">
+                            <option value="Prospeccao">📞 Prospecção (Ligações / Contatos)</option>
+                            <option value="Abordagem">🎯 Abordagem / Campo</option>
+                            <option value="Diagnostico">🔍 Diagnóstico (SPIN Opcional)</option>
+                            <option value="Apresentacao">📊 Apresentação / Reunião</option>
+                            <option value="Proposta">📄 Proposta Enviada</option>
+                            <option value="Fechado">🏆 Fechado / Ganho 🎉</option>
+                            <option value="Perdido">❌ Perdido / Insucesso</option>
+                        </select>
+                    </div>
+
+                    <div class="card bg-secondary bg-opacity-10 border-secondary p-3 mb-3" id="box_dados_agendamento">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong class="text-warning small"><i class="bi bi-calendar-week me-1"></i> Agendamento na Semana (Prudential)</strong>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="check_habilitar_agenda" checked onchange="toggleBoxAgenda(this.checked)">
+                                <label class="form-check-label text-secondary small" for="check_habilitar_agenda">Agendar</label>
+                            </div>
+                        </div>
+
+                        <div id="campos_agenda_container">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-7">
+                                    <label class="form-label small">Data *</label>
+                                    <input type="date" name="data_agendada" id="agendar_data" class="form-control form-control-sm bg-dark text-light border-secondary" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small">Horário *</label>
+                                    <input type="time" name="horario_agendado" id="agendar_horario" class="form-control form-control-sm bg-dark text-light border-secondary" value="09:00">
+                                </div>
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label small">Tipo de Atividade na Agenda</label>
+                                <select name="tipo_atividade" id="agendar_tipo_atividade" class="form-select form-select-sm bg-dark text-light border-secondary">
+                                    <option value="Ligacao">📞 Ligação</option>
+                                    <option value="Abordagem">🎯 Abordagem Presencial</option>
+                                    <option value="Diagnostico">🔍 Diagnóstico SPIN</option>
+                                    <option value="Apresentacao">📊 Apresentação de Solução</option>
+                                    <option value="Proposta">📄 Envio de Proposta</option>
+                                    <option value="Fechamento">🏆 Fechamento</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="form-label small">Anotação rápida (Pauta)</label>
+                                <input type="text" name="obs_atividade" id="agendar_obs" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Ex: Ligar para confirmar se diretor estará presente">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning text-dark fw-bold">Salvar e Atualizar Funil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
+function abrirModalMoverLead(lead, novaEtapa) {
+    if (novaEtapa === 'Perdido') {
+        document.getElementById('perda_lead_id').value = lead.id;
+        const modalPerda = new bootstrap.Modal(document.getElementById('modalPerdaLead'));
+        modalPerda.show();
+        return;
+    }
+
+    document.getElementById('agendar_lead_id').value = lead.id;
+    document.getElementById('agendar_empresa_alvo').value = lead.empresa_alvo;
+    document.getElementById('agendar_cliente_nome').textContent = lead.nome_cliente_fantasia;
+    document.getElementById('agendar_nova_etapa').value = novaEtapa;
+    
+    aoMudarEtapaAgendamento(novaEtapa);
+
+    const modal = new bootstrap.Modal(document.getElementById('modalMoverAgendarLead'));
+    modal.show();
+}
+
+function aoMudarEtapaAgendamento(etapa) {
+    if (etapa === 'Perdido') {
+        const modalMover = bootstrap.Modal.getInstance(document.getElementById('modalMoverAgendarLead'));
+        if (modalMover) modalMover.hide();
+        document.getElementById('perda_lead_id').value = document.getElementById('agendar_lead_id').value;
+        const modalPerda = new bootstrap.Modal(document.getElementById('modalPerdaLead'));
+        modalPerda.show();
+        return;
+    }
+
+    const selectTipo = document.getElementById('agendar_tipo_atividade');
+    if (etapa === 'Prospeccao') selectTipo.value = 'Ligacao';
+    else if (etapa === 'Abordagem') selectTipo.value = 'Abordagem';
+    else if (etapa === 'Diagnostico') selectTipo.value = 'Diagnostico';
+    else if (etapa === 'Apresentacao') selectTipo.value = 'Apresentacao';
+    else if (etapa === 'Proposta') selectTipo.value = 'Proposta';
+    else if (etapa === 'Fechado') selectTipo.value = 'Fechamento';
+}
+
+function toggleBoxAgenda(habilitado) {
+    const container = document.getElementById('campos_agenda_container');
+    const dataInput = document.getElementById('agendar_data');
+    const horaInput = document.getElementById('agendar_horario');
+    if (habilitado) {
+        container.style.opacity = '1';
+        dataInput.removeAttribute('disabled');
+        horaInput.removeAttribute('disabled');
+    } else {
+        container.style.opacity = '0.4';
+        dataInput.setAttribute('disabled', 'disabled');
+        horaInput.setAttribute('disabled', 'disabled');
+    }
+}
+
 function moverLead(leadId, novaEtapa, empresaAlvo) {
     if (novaEtapa === 'Perdido') {
         document.getElementById('perda_lead_id').value = leadId;

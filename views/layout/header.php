@@ -47,6 +47,9 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
                 <a href="<?= BASE_URL ?>/?page=tasks" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'tasks' ? 'active' : '' ?>">
                     <i class="bi bi-kanban me-2"></i> Tarefas (Kanban)
                 </a>
+                <a href="<?= BASE_URL ?>/?page=agenda" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'agenda' ? 'active' : '' ?>">
+                    <i class="bi bi-calendar-week me-2 text-warning"></i> Agenda da Semana
+                </a>
                 <a href="<?= BASE_URL ?>/?page=prospeccao" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'prospeccao' ? 'active' : '' ?>">
                     <i class="bi bi-crosshair me-2 text-warning"></i> Prospecção (SPIN)
                 </a>

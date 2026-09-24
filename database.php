@@ -281,6 +281,26 @@ class Database {
                     data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (usuario_id) REFERENCES users(id)
                 )");
+
+                self::$pdo->exec("CREATE TABLE IF NOT EXISTS agenda_comercial_semanal (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    vendedor_id INTEGER NOT NULL,
+                    lead_id INTEGER,
+                    cliente_nome VARCHAR(150) NOT NULL,
+                    contato_nome VARCHAR(100),
+                    contato_telefone VARCHAR(30),
+                    tipo_atividade VARCHAR(50) NOT NULL,
+                    data_agendada DATE NOT NULL,
+                    horario_agendado VARCHAR(10) NOT NULL,
+                    status_resultado VARCHAR(30) DEFAULT 'Planejado',
+                    resultado_obs TEXT,
+                    valor_estimado REAL DEFAULT 0,
+                    empresa_alvo VARCHAR(50) DEFAULT 'Autoitec',
+                    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (vendedor_id) REFERENCES users(id),
+                    FOREIGN KEY (lead_id) REFERENCES prospeccao_leads(id) ON DELETE SET NULL
+                )");
             } catch (PDOException $e) {
                 die("Erro de conexão com o banco de dados: " . $e->getMessage());
             }

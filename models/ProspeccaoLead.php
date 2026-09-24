@@ -6,7 +6,9 @@ class ProspeccaoLead {
     public static function getAll($empresa = null, $vendedorId = null) {
         $db = Database::getConnection();
         $sql = "
-            SELECT l.*, u.name as vendedor_nome, u.avatar_color as vendedor_avatar
+            SELECT l.*, u.name as vendedor_nome, u.avatar_color as vendedor_avatar,
+                   (SELECT a.data_agendada || ' às ' || a.horario_agendado FROM agenda_comercial_semanal a WHERE a.lead_id = l.id AND a.status_resultado = 'Planejado' AND a.data_agendada >= CURRENT_DATE ORDER BY a.data_agendada ASC, a.horario_agendado ASC LIMIT 1) as prox_agendamento,
+                   (SELECT a.tipo_atividade FROM agenda_comercial_semanal a WHERE a.lead_id = l.id AND a.status_resultado = 'Planejado' AND a.data_agendada >= CURRENT_DATE ORDER BY a.data_agendada ASC, a.horario_agendado ASC LIMIT 1) as prox_agendamento_tipo
             FROM prospeccao_leads l
             LEFT JOIN users u ON l.vendedor_id = u.id
             WHERE 1=1
@@ -154,6 +156,27 @@ class ProspeccaoLead {
             'data_recontato' => $dataRecontato ?: null,
             'recontato_task_id' => $recontatoTaskId,
             'id' => $id
+        ]);
+    }
+
+    public static function agendarAtividade($leadId, $dataAgendada, $horarioAgendado, $tipoAtividade, $observacao = '', $userId = null) {
+        $lead = self::getById($leadId);
+        if (!$lead) return false;
+
+        require_once __DIR__ . '/AgendaSemanal.php';
+        return AgendaSemanal::create([
+            'vendedor_id' => $userId ?: ($lead['vendedor_id'] ?: 1),
+            'lead_id' => $leadId,
+            'cliente_nome' => $lead['nome_cliente_fantasia'],
+            'contato_nome' => $lead['contato_nome'],
+            'contato_telefone' => $lead['contato_telefone'],
+            'tipo_atividade' => $tipoAtividade,
+            'data_agendada' => $dataAgendada,
+            'horario_agendado' => $horarioAgendado ?: '09:00',
+            'status_resultado' => 'Planejado',
+            'resultado_obs' => $observacao,
+            'valor_estimado' => $lead['valor_estimado'],
+            'empresa_alvo' => $lead['empresa_alvo']
         ]);
     }
 
