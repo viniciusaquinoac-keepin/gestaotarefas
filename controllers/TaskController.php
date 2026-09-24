@@ -61,10 +61,11 @@ class TaskController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $taskId = $_POST['task_id'];
             $newDate = $_POST['due_date'];
-            $comment = $_POST['comment'];
+            $comment = $_POST['comment'] ?? '';
+            $categoriaMotivo = $_POST['categoria_motivo'] ?? 'Cliente/Planta';
             $userId = $_SESSION['user_id'];
             
-            Task::postpone($taskId, $newDate, $comment, $userId);
+            Task::postpone($taskId, $newDate, $comment, $userId, $categoriaMotivo);
             header('Location: ' . BASE_URL . '/?page=timeline&id=' . $taskId);
             exit;
         }

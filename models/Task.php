@@ -131,7 +131,7 @@ class Task {
         return $db->lastInsertId();
     }
 
-    public static function postpone($taskId, $newDate, $comment, $userId) {
+    public static function postpone($taskId, $newDate, $comment, $userId, $categoriaMotivo = 'Cliente/Planta') {
         $db = Database::getConnection();
         
         $stmt = $db->prepare("SELECT due_date FROM tasks WHERE id = :id");
@@ -145,8 +145,15 @@ class Task {
         ]);
 
         if ($success) {
+            $abono = ($categoriaMotivo === 'Cliente/Planta') ? 1 : 0;
+            $abonoLabel = $abono ? " [Abono SLA Concedido - Motivo: Cliente/Planta]" : " [Impacta SLA - Motivo: {$categoriaMotivo}]";
+            $fullComment = $comment . $abonoLabel;
+
             require_once __DIR__ . '/TaskHistory.php';
-            TaskHistory::add($taskId, 'postponed', $oldDate, $newDate, $comment, $userId);
+            TaskHistory::add($taskId, 'postponed', $oldDate, $newDate, $fullComment, $userId);
+
+            require_once __DIR__ . '/ProrrogacaoTarefa.php';
+            ProrrogacaoTarefa::add($taskId, $userId, $oldDate, $newDate, $categoriaMotivo, $comment);
         }
 
         return $success;

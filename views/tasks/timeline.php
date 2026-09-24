@@ -47,7 +47,12 @@
                             <?php if ($h['action'] === 'status_change'): ?>
                                 <div class="text-light">Moveu a tarefa de <strong><?= $h['old_value'] ?></strong> para <strong><?= $h['new_value'] ?></strong></div>
                             <?php elseif ($h['action'] === 'postponed'): ?>
-                                <div class="text-warning fw-bold">Prorrogou o prazo!</div>
+                                <div class="text-warning fw-bold d-flex align-items-center gap-2">
+                                    <span>Prorrogou o prazo!</span>
+                                    <?php if (strpos($h['comment'], 'Abono SLA Concedido') !== false): ?>
+                                        <span class="badge bg-success-subtle text-success border border-success"><i class="bi bi-shield-check"></i> Abono de SLA Ativo (Cliente)</span>
+                                    <?php endif; ?>
+                                </div>
                                 <div class="text-light">De: <?= date('d/m/Y', strtotime($h['old_value'])) ?> Para: <?= date('d/m/Y', strtotime($h['new_value'])) ?></div>
                                 <div class="bg-secondary bg-opacity-25 p-2 rounded mt-2 border border-secondary text-light">
                                     <i class="bi bi-chat-quote me-2"></i> <?= htmlspecialchars($h['comment']) ?>
@@ -121,8 +126,20 @@
                         <input type="date" name="due_date" class="form-control bg-dark text-light border-secondary" required min="<?= date('Y-m-d') ?>">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-warning fw-bold">Motivo da Prorrogação (Obrigatório)</label>
-                        <textarea name="comment" class="form-control bg-dark text-light border-secondary" rows="3" placeholder="Explique por que esta tarefa está atrasando..." required></textarea>
+                        <label class="form-label text-warning fw-bold">Responsável pelo Atraso (Categoria)</label>
+                        <select name="categoria_motivo" id="categoria_motivo" class="form-select bg-dark text-light border-secondary" required>
+                            <option value="Cliente/Planta" selected>Cliente/Planta (Alteração de escopo / Atraso na liberação - ABONO DE SLA)</option>
+                            <option value="Fornecedor">Fornecedor (Atraso em peças / insumos externos)</option>
+                            <option value="Interno">Interno / Operacional (Planejamento / Execução)</option>
+                            <option value="Campo">Campo / Clima (Deslocamento / Clima desfavorável)</option>
+                        </select>
+                        <div class="form-text text-info small mt-2">
+                            <i class="bi bi-shield-check"></i> <strong>Abono Inteligente:</strong> Ao selecionar <em>Cliente/Planta</em>, a penalidade no seu indicador de SLA/OTIF é 100% abonada.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-warning fw-bold">Justificativa Detalhada (Obrigatório)</label>
+                        <textarea name="comment" class="form-control bg-dark text-light border-secondary" rows="3" placeholder="Explique com detalhes o motivo do replanejamento deste prazo..." required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-secondary">

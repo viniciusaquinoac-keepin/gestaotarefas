@@ -6,6 +6,8 @@ sessions/*
 *.db-journal
 *.db-wal
 *.db-shm
+*old.db
+*.bak
 
 # Environment & local settings
 .env

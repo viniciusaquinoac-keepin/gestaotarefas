@@ -213,6 +213,74 @@ class Database {
                     $stmtInsert->execute(['default_phases', $defaultPhases, 'Lista padrão de etapas de obra']);
                     $stmtInsert->execute(['default_cost_categories', $defaultCategories, 'Categorias padrão para lançamento de custos']);
                 }
+
+                // --- MÓDULO METRIFICADO AUTOITEC & KEEPIN ---
+                self::$pdo->exec("CREATE TABLE IF NOT EXISTS prospeccao_leads (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    empresa_alvo VARCHAR(50) NOT NULL,
+                    nome_cliente_fantasia VARCHAR(150) NOT NULL,
+                    contato_nome VARCHAR(100),
+                    contato_telefone VARCHAR(30),
+                    contato_email VARCHAR(120),
+                    etapa_funil VARCHAR(50) NOT NULL DEFAULT 'Abordagem/Rua',
+                    valor_estimado REAL DEFAULT 0,
+                    spin_situacao TEXT,
+                    spin_problema TEXT,
+                    spin_implicacao TEXT,
+                    spin_necessidade TEXT,
+                    meddpicc_score INT DEFAULT 0,
+                    meddpicc_data TEXT,
+                    motivo_perda VARCHAR(50),
+                    motivo_perda_obs TEXT,
+                    data_recontato_futuro DATE,
+                    recontato_task_id INTEGER,
+                    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    vendedor_id INTEGER NOT NULL,
+                    FOREIGN KEY (vendedor_id) REFERENCES users(id)
+                )");
+
+                self::$pdo->exec("CREATE TABLE IF NOT EXISTS prorrogacoes_tarefas (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tarefa_id INTEGER NOT NULL,
+                    usuario_id INTEGER NOT NULL,
+                    data_solicitacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    data_vencimento_anterior DATE NOT NULL,
+                    nova_data_vencimento DATE NOT NULL,
+                    categoria_motivo VARCHAR(50) NOT NULL,
+                    justificativa TEXT NOT NULL,
+                    abono_penalidade BOOLEAN DEFAULT 0,
+                    FOREIGN KEY (tarefa_id) REFERENCES tasks(id) ON DELETE CASCADE,
+                    FOREIGN KEY (usuario_id) REFERENCES users(id)
+                )");
+
+                self::$pdo->exec("CREATE TABLE IF NOT EXISTS visitas_campo_keepin (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    vendedor_id INTEGER NOT NULL,
+                    estabelecimento_nome VARCHAR(150) NOT NULL,
+                    contato_abordado VARCHAR(100),
+                    telefone VARCHAR(30),
+                    segmento VARCHAR(50) DEFAULT 'Supermercado',
+                    data_visita DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    observacao TEXT,
+                    interesse_placa BOOLEAN DEFAULT 0,
+                    interesse_kpremote BOOLEAN DEFAULT 0,
+                    FOREIGN KEY (vendedor_id) REFERENCES users(id)
+                )");
+
+                self::$pdo->exec("CREATE TABLE IF NOT EXISTS kpis_trimestrais_usuario (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    usuario_id INTEGER NOT NULL,
+                    trimestre_ano VARCHAR(10) NOT NULL,
+                    pontos_vendas INT DEFAULT 0,
+                    pontos_sla_otif INT DEFAULT 0,
+                    pontos_visitas INT DEFAULT 0,
+                    score_total INT DEFAULT 0,
+                    percentual_comissao_devido DECIMAL(5,2) DEFAULT 0,
+                    elegivel_acelerador_500 BOOLEAN DEFAULT 0,
+                    data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (usuario_id) REFERENCES users(id)
+                )");
             } catch (PDOException $e) {
                 die("Erro de conexão com o banco de dados: " . $e->getMessage());
             }

@@ -42,7 +42,13 @@ try {
         }
     }
 
-    echo "Tabelas atualizadas com sucesso (incluindo Módulo de Obras em database.php).";
+    // Executar migração do novo schema metrificado (4 tabelas)
+    $schemaFile = __DIR__ . '/database/update_schema.sql';
+    if (file_exists($schemaFile)) {
+        $db->exec(file_get_contents($schemaFile));
+    }
+
+    echo "Tabelas atualizadas com sucesso (incluindo Módulo Metrificado: prospeccao_leads, prorrogacoes_tarefas, visitas_campo_keepin, kpis_trimestrais_usuario).";
 } catch (Exception $e) {
     echo "ERROR: " . $e->getMessage();
 }

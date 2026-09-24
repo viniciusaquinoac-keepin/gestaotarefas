@@ -47,8 +47,17 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
                 <a href="<?= BASE_URL ?>/?page=tasks" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'tasks' ? 'active' : '' ?>">
                     <i class="bi bi-kanban me-2"></i> Tarefas (Kanban)
                 </a>
+                <a href="<?= BASE_URL ?>/?page=prospeccao" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'prospeccao' ? 'active' : '' ?>">
+                    <i class="bi bi-crosshair me-2 text-warning"></i> Prospecção (SPIN)
+                </a>
+                <a href="<?= BASE_URL ?>/?page=kpis" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'kpis' ? 'active' : '' ?>">
+                    <i class="bi bi-trophy me-2 text-warning"></i> KPIs & Ranking
+                </a>
+                <a href="<?= BASE_URL ?>/?page=playbook" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'playbook' ? 'active' : '' ?>">
+                    <i class="bi bi-journal-bookmark me-2 text-info"></i> Playbooks
+                </a>
                 <a href="<?= BASE_URL ?>/?page=leads" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'leads' ? 'active' : '' ?>">
-                    <i class="bi bi-funnel me-2"></i> Comercial (Leads)
+                    <i class="bi bi-funnel me-2"></i> Comercial (Leads Antigos)
                 </a>
                 <a href="<?= BASE_URL ?>/?page=meetings" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'meetings' ? 'active' : '' ?>">
                     <i class="bi bi-calendar2-check me-2"></i> Reuniões

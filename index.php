@@ -18,7 +18,10 @@ $routes = [
     'suggestions' => 'SuggestionController',
     'report' => 'ReportController',
     'lead_timeline' => 'LeadTimelineController',
-    'projects' => 'ProjectController'
+    'projects' => 'ProjectController',
+    'prospeccao' => 'ProspeccaoController',
+    'kpis' => 'KpiController',
+    'playbook' => 'PlaybookController'
 ];
 
 if (!array_key_exists($page, $routes)) {
