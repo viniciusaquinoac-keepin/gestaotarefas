@@ -1,0 +1,121 @@
+/* CSS Específico do Módulo de Gestão de Obras */
+
+.kpi-card {
+    background: rgba(33, 37, 41, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.kpi-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+/* Progress bar color indicators */
+.progress-bar-success {
+    background: linear-gradient(90deg, #198754, #20c997);
+}
+.progress-bar-warning {
+    background: linear-gradient(90deg, #ffc107, #fd7e14);
+}
+.progress-bar-danger {
+    background: linear-gradient(90deg, #dc3545, #b02a37);
+}
+
+/* Pipeline Kanban Compras */
+.kanban-col {
+    background: #1e2227;
+    border-radius: 8px;
+    padding: 1rem;
+    min-height: 450px;
+}
+
+.purchase-card {
+    background: #2b3036;
+    border-left: 4px solid #0d6efd;
+    border-radius: 6px;
+    padding: 0.85rem;
+    margin-bottom: 0.75rem;
+    transition: transform 0.15s ease;
+}
+
+.purchase-card:hover {
+    transform: scale(1.01);
+}
+
+.purchase-card.delayed {
+    border-left-color: #dc3545;
+}
+
+/* Timeline / Gantt Simplificado */
+.phase-accordion-header {
+    background-color: #24282e !important;
+    color: #fff !important;
+    border: none;
+}
+
+.phase-accordion-button {
+    background-color: #24282e !important;
+    color: #fff !important;
+    box-shadow: none !important;
+}
+
+.gantt-bar-planned {
+    height: 10px;
+    background-color: #3b82f6;
+    border-radius: 4px;
+}
+
+.gantt-bar-actual {
+    height: 10px;
+    background-color: #10b981;
+    border-radius: 4px;
+}
+
+.gantt-bar-delayed {
+    height: 10px;
+    background-color: #ef4444;
+    border-radius: 4px;
+}
+
+/* Timeline Feed */
+.timeline-item {
+    position: relative;
+    padding-left: 30px;
+    padding-bottom: 1.5rem;
+    border-left: 2px solid #343a40;
+}
+
+.timeline-item:last-child {
+    border-left-color: transparent;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -7px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #0d6efd;
+}
+
+/* Quick Form Inline */
+.quick-form-card {
+    background: #1a1d20;
+    border: 1px solid #0d6efd;
+    border-radius: 8px;
+    padding: 1rem;
+}
