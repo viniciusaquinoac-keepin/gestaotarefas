@@ -59,12 +59,149 @@ class KpiTrimestral {
         ];
     }
 
-    public static function calculateUserKpi($userId, $quarter = null) {
-        $db = Database::getConnection();
-        if (!$quarter) {
-            $quarter = self::getCurrentQuarter();
+    public static function resolvePeriodDateRange($tipoPeriodo = 'trimestral', $valorPeriodo = null) {
+        if ($tipoPeriodo === 'semanal') {
+            if (!$valorPeriodo) {
+                $valorPeriodo = date('Y-\WW'); // ex: 2026-W39
+            }
+            $dto = new DateTime();
+            if (preg_match('/^(\d{4})-W(\d{2})$/', $valorPeriodo, $m)) {
+                $year = (int)$m[1];
+                $week = (int)$m[2];
+                $dto->setISODate($year, $week, 1); // 1 = Segunda-feira
+                $startDate = $dto->format('Y-m-d');
+                $dto->modify('+6 days'); // Domingo
+                $endDate = $dto->format('Y-m-d');
+            } else {
+                $dto->modify('monday this week');
+                $startDate = $dto->format('Y-m-d');
+                $dto->modify('+6 days');
+                $endDate = $dto->format('Y-m-d');
+                $valorPeriodo = date('Y-\WW');
+            }
+
+            return [
+                'tipo' => 'semanal',
+                'chave' => $valorPeriodo,
+                'label' => 'Semana ' . substr($valorPeriodo, 6) . ' (' . date('d/m', strtotime($startDate)) . ' a ' . date('d/m/Y', strtotime($endDate)) . ')',
+                'start' => "{$startDate} 00:00:00",
+                'end' => "{$endDate} 23:59:59",
+                'start_date' => $startDate,
+                'end_date' => $endDate
+            ];
+        } elseif ($tipoPeriodo === 'mensal') {
+            if (!$valorPeriodo) {
+                $valorPeriodo = date('Y-m'); // ex: 2026-09
+            }
+            if (preg_match('/^(\d{4})-(\d{2})$/', $valorPeriodo, $m)) {
+                $year = (int)$m[1];
+                $month = (int)$m[2];
+                $startDate = date("Y-m-01", strtotime("{$year}-{$month}-01"));
+                $endDate = date("Y-m-t", strtotime("{$year}-{$month}-01"));
+            } else {
+                $startDate = date('Y-m-01');
+                $endDate = date('Y-m-t');
+                $valorPeriodo = date('Y-m');
+            }
+
+            $mesesNomes = [
+                '01' => 'Janeiro', '02' => 'Fevereiro', '03' => 'Março',
+                '04' => 'Abril', '05' => 'Maio', '06' => 'Junho',
+                '07' => 'Julho', '08' => 'Agosto', '09' => 'Setembro',
+                '10' => 'Outubro', '11' => 'Novembro', '12' => 'Dezembro'
+            ];
+            $mesNum = substr($valorPeriodo, 5, 2);
+            $mesNome = $mesesNomes[$mesNum] ?? $mesNum;
+
+            return [
+                'tipo' => 'mensal',
+                'chave' => $valorPeriodo,
+                'label' => "{$mesNome} / " . substr($valorPeriodo, 0, 4),
+                'start' => "{$startDate} 00:00:00",
+                'end' => "{$endDate} 23:59:59",
+                'start_date' => $startDate,
+                'end_date' => $endDate
+            ];
+        } else {
+            // Trimestral (default)
+            if (!$valorPeriodo) {
+                $valorPeriodo = self::getCurrentQuarter();
+            }
+            $range = self::getQuarterDateRange($valorPeriodo);
+            return [
+                'tipo' => 'trimestral',
+                'chave' => $valorPeriodo,
+                'label' => "Trimestre {$valorPeriodo}",
+                'start' => $range['start'],
+                'end' => $range['end'],
+                'start_date' => $range['start_date'],
+                'end_date' => $range['end_date']
+            ];
         }
-        $range = self::getQuarterDateRange($quarter);
+    }
+
+    public static function getPeriodosDisponiveis($tipoPeriodo = 'trimestral') {
+        if ($tipoPeriodo === 'semanal') {
+            $semanas = [];
+            $dto = new DateTime();
+            $dto->modify('monday this week');
+            for ($i = 0; $i < 8; $i++) {
+                $wKey = $dto->format('Y-\WW');
+                $startFormatted = $dto->format('d/m');
+                $dtoSunday = clone $dto;
+                $dtoSunday->modify('+6 days');
+                $endFormatted = $dtoSunday->format('d/m/Y');
+                $isCurrent = ($i === 0) ? ' (Semana Atual)' : '';
+                $semanas[$wKey] = "Semana " . $dto->format('W') . " ({$startFormatted} a {$endFormatted}){$isCurrent}";
+                $dto->modify('-7 days');
+            }
+            return $semanas;
+        } elseif ($tipoPeriodo === 'mensal') {
+            $meses = [];
+            $mesesNomes = [
+                '01' => 'Janeiro', '02' => 'Fevereiro', '03' => 'Março',
+                '04' => 'Abril', '05' => 'Maio', '06' => 'Junho',
+                '07' => 'Julho', '08' => 'Agosto', '09' => 'Setembro',
+                '10' => 'Outubro', '11' => 'Novembro', '12' => 'Dezembro'
+            ];
+            $dto = new DateTime('first day of this month');
+            for ($i = 0; $i < 8; $i++) {
+                $mKey = $dto->format('Y-m');
+                $mNum = $dto->format('m');
+                $nomeMes = $mesesNomes[$mNum] ?? $mNum;
+                $ano = $dto->format('Y');
+                $isCurrent = ($i === 0) ? ' (Mês Atual)' : '';
+                $meses[$mKey] = "{$nomeMes}/{$ano}{$isCurrent}";
+                $dto->modify('-1 month');
+            }
+            return $meses;
+        } else {
+            return [
+                '2026-Q4' => '2026 - Q4 (Out/Nov/Dez - Ciclo Ativo)',
+                '2026-Q3' => '2026 - Q3 (Jul/Ago/Set)',
+                '2026-Q2' => '2026 - Q2 (Abr/Mai/Jun)',
+                '2026-Q1' => '2026 - Q1 (Jan/Fev/Mar)'
+            ];
+        }
+    }
+
+    public static function calculateUserKpi($userId, $periodoParam = null) {
+        $db = Database::getConnection();
+        
+        if (is_array($periodoParam) && isset($periodoParam['start_date']) && isset($periodoParam['end_date'])) {
+            $range = $periodoParam;
+        } elseif (is_string($periodoParam)) {
+            if (preg_match('/^\d{4}-W\d{2}$/', $periodoParam)) {
+                $range = self::resolvePeriodDateRange('semanal', $periodoParam);
+            } elseif (preg_match('/^\d{4}-\d{2}$/', $periodoParam)) {
+                $range = self::resolvePeriodDateRange('mensal', $periodoParam);
+            } else {
+                $range = self::resolvePeriodDateRange('trimestral', $periodoParam);
+            }
+        } else {
+            $range = self::resolvePeriodDateRange('trimestral');
+        }
+        $quarter = $range['chave'];
 
         // 1. PONTUAÇÃO DE VENDAS / FECHAMENTOS NA AGENDA (Máx 40 pts)
         // Busca na tabela agenda_comercial_semanal os fechamentos realizados no trimestre
@@ -289,18 +426,15 @@ class KpiTrimestral {
         ];
     }
 
-    public static function getRanking($quarter = null) {
+    public static function getRanking($periodoParam = null) {
         $db = Database::getConnection();
-        if (!$quarter) {
-            $quarter = self::getCurrentQuarter();
-        }
 
         // Buscar todos os usuários ativos
         $users = $db->query("SELECT id, name, email, department, avatar_color FROM users WHERE active = 1 ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
         $ranking = [];
         foreach ($users as $u) {
-            $kpi = self::calculateUserKpi($u['id'], $quarter);
+            $kpi = self::calculateUserKpi($u['id'], $periodoParam);
             $ranking[] = array_merge($u, $kpi);
         }
 

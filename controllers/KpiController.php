@@ -9,12 +9,22 @@ class KpiController {
         requireAuth();
         $currentUser = getCurrentUser();
 
-        // Determinar trimestre selecionado ou usar o trimestre dinâmico ativo
-        $trimestreAtivo = KpiTrimestral::getCurrentQuarter();
-        $trimestre = $_GET['trimestre'] ?? $trimestreAtivo;
+        // Determinar tipo de período (semanal, mensal, trimestral)
+        $tipoPeriodo = $_GET['tipo_periodo'] ?? 'trimestral';
+        if (!in_array($tipoPeriodo, ['semanal', 'mensal', 'trimestral'])) {
+            $tipoPeriodo = 'trimestral';
+        }
 
-        // Buscar ranking dinâmico de todos os colaboradores para o trimestre
-        $ranking = KpiTrimestral::getRanking($trimestre);
+        // Determinar chave do período selecionado
+        $periodoValor = $_GET['periodo_valor'] ?? ($_GET['trimestre'] ?? null);
+
+        // Resolver intervalo de datas e label do período
+        $periodoInfo = KpiTrimestral::resolvePeriodDateRange($tipoPeriodo, $periodoValor);
+        $periodosDisponiveis = KpiTrimestral::getPeriodosDisponiveis($tipoPeriodo);
+        $trimestreAtivo = KpiTrimestral::getCurrentQuarter();
+
+        // Buscar ranking dinâmico de todos os colaboradores para o período selecionado
+        $ranking = KpiTrimestral::getRanking($periodoInfo);
 
         // Obter KPI individual do usuário logado (ou do usuário selecionado na visão individual se for admin)
         if (isAdmin()) {
@@ -22,7 +32,7 @@ class KpiController {
         } else {
             $userIdVisao = (int)$currentUser['id'];
         }
-        $userKpi = KpiTrimestral::calculateUserKpi($userIdVisao, $trimestre);
+        $userKpi = KpiTrimestral::calculateUserKpi($userIdVisao, $periodoInfo);
 
         // Buscar informações do usuário em foco
         $db = Database::getConnection();
@@ -30,19 +40,16 @@ class KpiController {
         $stmtUser->execute(['id' => $userIdVisao]);
         $targetUser = $stmtUser->fetch(PDO::FETCH_ASSOC);
 
-        // Lista de trimestres disponíveis para navegação histórica
-        $trimestresDisponiveis = [
-            '2026-Q4' => '2026 - Q4 (Out/Nov/Dez - Ciclo Ativo)',
-            '2026-Q3' => '2026 - Q3 (Jul/Ago/Set)',
-            '2026-Q2' => '2026 - Q2 (Abr/Mai/Jun)',
-            '2026-Q1' => '2026 - Q1 (Jan/Fev/Mar)'
-        ];
-
         // Estatísticas do departamento de Engenharia / Automação (SLA e Abonos)
-        $dateRange = KpiTrimestral::getQuarterDateRange($trimestre);
-        $prorrogacoesStats = ProrrogacaoTarefa::getStatsByPeriod($dateRange['start_date'], $dateRange['end_date']);
+        $dateRange = [
+            'start_date' => $periodoInfo['start_date'],
+            'end_date' => $periodoInfo['end_date'],
+            'start' => $periodoInfo['start'],
+            'end' => $periodoInfo['end']
+        ];
+        $prorrogacoesStats = ProrrogacaoTarefa::getStatsByPeriod($periodoInfo['start_date'], $periodoInfo['end_date']);
 
-        // Estatísticas consolidadas da Agenda Comercial da equipe no Trimestre
+        // Estatísticas consolidadas da Agenda Comercial da equipe no Período Selecionado
         $stmtAgendaEquipe = $db->prepare("
             SELECT 
                 COUNT(*) as total_atividades,
@@ -57,8 +64,8 @@ class KpiController {
               AND data_agendada BETWEEN :start_date AND :end_date
         ");
         $stmtAgendaEquipe->execute([
-            'start_date' => $dateRange['start_date'],
-            'end_date' => $dateRange['end_date']
+            'start_date' => $periodoInfo['start_date'],
+            'end_date' => $periodoInfo['end_date']
         ]);
         $agendaEquipeStats = $stmtAgendaEquipe->fetch(PDO::FETCH_ASSOC);
 

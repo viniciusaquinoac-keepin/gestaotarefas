@@ -2,7 +2,7 @@
 $score = $userKpi['score_total'];
 $comissao = $userKpi['percentual_comissao_devido'];
 $acelerador = $userKpi['elegivel_acelerador_500'];
-$isCurrentQuarter = ($trimestre === $trimestreAtivo);
+$isCurrentQuarter = ($periodoInfo['chave'] === $trimestreAtivo);
 
 // Cor do Score
 $scoreColor = '#dc3545'; // vermelho < 50
@@ -16,24 +16,43 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
     <div>
         <div class="d-flex align-items-center gap-2 mb-1">
             <span class="badge bg-warning text-dark fs-6"><i class="bi bi-trophy-fill"></i> Gamificação & Metrificação</span>
-            <?php if ($isCurrentQuarter): ?>
-                <span class="badge bg-success"><i class="bi bi-broadcast"></i> Ciclo Trimestral Ativo (Dinâmico)</span>
-            <?php else: ?>
-                <span class="badge bg-secondary"><i class="bi bi-archive"></i> Histórico Arquivado</span>
-            <?php endif; ?>
+            <span class="badge bg-<?= ($tipoPeriodo === 'semanal') ? 'primary' : (($tipoPeriodo === 'mensal') ? 'info text-dark' : 'success') ?>">
+                <i class="bi bi-<?= ($tipoPeriodo === 'semanal') ? 'calendar2-week' : (($tipoPeriodo === 'mensal') ? 'calendar2-month' : 'broadcast') ?>"></i>
+                Visão <?= ucfirst($tipoPeriodo) ?>
+            </span>
         </div>
-        <h1 class="h3 text-light mb-0">Painel de KPIs, Velocímetro & Ranking Aberto</h1>
+        <h1 class="h3 text-light mb-0">Painel de KPIs, Velocímetro & Ranking</h1>
     </div>
 
-    <!-- Seletor de Trimestre Dinâmico -->
-    <div class="d-flex align-items-center gap-2">
-        <form method="GET" action="<?= BASE_URL ?>/" class="d-flex align-items-center gap-2">
+    <!-- Filtros de Período: Semanal, Mensal e Trimestral -->
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <!-- Grupo de Botões Semanal / Mensal / Trimestral -->
+        <div class="btn-group btn-group-sm shadow-sm" role="group">
+            <a href="<?= BASE_URL ?>/?page=kpis&tipo_periodo=semanal<?= (isAdmin() && !empty($userIdVisao)) ? '&usuario_id=' . (int)$userIdVisao : '' ?>" 
+               class="btn <?= ($tipoPeriodo === 'semanal') ? 'btn-primary' : 'btn-outline-secondary text-light' ?>">
+                <i class="bi bi-calendar2-week me-1"></i> Semanal
+            </a>
+            <a href="<?= BASE_URL ?>/?page=kpis&tipo_periodo=mensal<?= (isAdmin() && !empty($userIdVisao)) ? '&usuario_id=' . (int)$userIdVisao : '' ?>" 
+               class="btn <?= ($tipoPeriodo === 'mensal') ? 'btn-primary' : 'btn-outline-secondary text-light' ?>">
+                <i class="bi bi-calendar2-month me-1"></i> Mensal
+            </a>
+            <a href="<?= BASE_URL ?>/?page=kpis&tipo_periodo=trimestral<?= (isAdmin() && !empty($userIdVisao)) ? '&usuario_id=' . (int)$userIdVisao : '' ?>" 
+               class="btn <?= ($tipoPeriodo === 'trimestral') ? 'btn-primary' : 'btn-outline-secondary text-light' ?>">
+                <i class="bi bi-calendar3 me-1"></i> Trimestral
+            </a>
+        </div>
+
+        <!-- Seletor do Período Específico -->
+        <form method="GET" action="<?= BASE_URL ?>/" class="d-flex align-items-center gap-1 mb-0">
             <input type="hidden" name="page" value="kpis">
-            <label class="text-secondary small text-nowrap">Trimestre:</label>
-            <select name="trimestre" class="form-select form-select-sm bg-dark text-light border-secondary" onchange="this.form.submit()">
-                <?php foreach ($trimestresDisponiveis as $k => $label): ?>
-                    <option value="<?= $k ?>" <?= ($trimestre === $k) ? 'selected' : '' ?>>
-                        <?= $label ?>
+            <input type="hidden" name="tipo_periodo" value="<?= htmlspecialchars($tipoPeriodo) ?>">
+            <?php if (isAdmin() && !empty($userIdVisao)): ?>
+                <input type="hidden" name="usuario_id" value="<?= (int)$userIdVisao ?>">
+            <?php endif; ?>
+            <select name="periodo_valor" class="form-select form-select-sm bg-dark text-light border-secondary shadow-sm" onchange="this.form.submit()" style="min-width: 220px;">
+                <?php foreach ($periodosDisponiveis as $k => $label): ?>
+                    <option value="<?= $k ?>" <?= ($periodoInfo['chave'] === $k) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($label) ?>
                     </option>
                 <?php endforeach; ?>
             </select>
@@ -41,14 +60,16 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
     </div>
 </div>
 
-<!-- Informativo do Ciclo Calendardizado 100% Dinâmico -->
-<div class="alert alert-dark border-secondary d-flex align-items-center justify-content-between py-2 px-3 mb-4 shadow-sm">
+<!-- Informativo do Período de Apuração 100% Dinâmico -->
+<div class="alert alert-dark border-secondary d-flex flex-wrap align-items-center justify-content-between py-2 px-3 mb-4 shadow-sm gap-2">
     <div class="small text-secondary">
-        <i class="bi bi-info-circle text-info me-1"></i> <strong>Apuração Dinâmica:</strong> Os lançamentos a partir de <strong>24/09/2026</strong> computam oficialmente no ciclo <strong>2026-Q4</strong>. O encerramento e rotação de pontuação ocorrem de forma 100% automática pelo calendário.
+        <i class="bi bi-info-circle text-info me-1"></i> <strong>Apuração Dinâmica (<?= ucfirst($tipoPeriodo) ?>):</strong> 
+        Métricas consolidadas a partir dos agendamentos e atividades da <strong>Agenda Semanal</strong> e conformidade de entregas.
     </div>
     <div class="text-end small">
-        <span class="text-secondary">Período de Apuração:</span>
+        <span class="text-secondary">Período Selecionado:</span>
         <strong class="text-light"><?= date('d/m/Y', strtotime($dateRange['start_date'])) ?> até <?= date('d/m/Y', strtotime($dateRange['end_date'])) ?></strong>
+        <span class="badge bg-secondary ms-1"><?= htmlspecialchars($periodoInfo['label']) ?></span>
     </div>
 </div>
 
@@ -94,7 +115,7 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
         <div class="card bg-dark border-secondary h-100 shadow-sm">
             <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center py-2">
                 <span class="text-warning fw-bold small"><i class="bi bi-calendar-check-fill me-1"></i> Comercial & Agenda Semanal (Consolidado)</span>
-                <span class="badge bg-secondary">Equipe no Trimestre</span>
+                <span class="badge bg-secondary">Equipe (<?= ucfirst($tipoPeriodo) ?>)</span>
             </div>
             <div class="card-body p-3">
                 <div class="row g-2 text-center">
@@ -145,7 +166,7 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
             </div>
             <div>
                 <h5 class="card-title text-light mb-0">Termômetro Individual de Desempenho: <strong><?= htmlspecialchars($targetUser['name']) ?></strong></h5>
-                <span class="text-secondary small"><?= htmlspecialchars($targetUser['department']) ?> • Trimestre <?= htmlspecialchars($trimestre) ?></span>
+                <span class="text-secondary small"><?= htmlspecialchars($targetUser['department']) ?> • <?= htmlspecialchars($periodoInfo['label']) ?></span>
             </div>
         </div>
 
@@ -153,9 +174,10 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
         <!-- Seletor de Colaborador para Gestão -->
         <form method="GET" action="<?= BASE_URL ?>/" class="d-flex align-items-center gap-2">
             <input type="hidden" name="page" value="kpis">
-            <input type="hidden" name="trimestre" value="<?= htmlspecialchars($trimestre) ?>">
+            <input type="hidden" name="tipo_periodo" value="<?= htmlspecialchars($tipoPeriodo) ?>">
+            <input type="hidden" name="periodo_valor" value="<?= htmlspecialchars($periodoInfo['chave']) ?>">
             <label class="text-secondary small text-nowrap">Ver Colaborador:</label>
-            <select name="usuario_id" class="form-select form-select-sm bg-dark text-light border-secondary" onchange="this.form.submit()">
+            <select name="usuario_id" class="form-select form-select-sm bg-dark text-light border-secondary shadow-sm" onchange="this.form.submit()">
                 <?php foreach ($ranking as $r): ?>
                     <option value="<?= $r['id'] ?>" <?= ($userIdVisao == $r['id']) ? 'selected' : '' ?>>
                         <?= htmlspecialchars($r['name']) ?> (<?= $r['score_total'] ?> pts)
@@ -271,7 +293,7 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
     <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center py-3">
         <div class="d-flex align-items-center gap-2">
             <span class="badge bg-warning text-dark"><i class="bi bi-award-fill"></i> Leaderboard</span>
-            <h5 class="card-title text-light mb-0">Ranking Comercial Aberto da Equipe</h5>
+            <h5 class="card-title text-light mb-0">Ranking <?= ucfirst($tipoPeriodo) ?> Aberto da Equipe</h5>
         </div>
         <span class="badge bg-secondary"><?= count($ranking) ?> colaboradores pontuando</span>
     </div>
