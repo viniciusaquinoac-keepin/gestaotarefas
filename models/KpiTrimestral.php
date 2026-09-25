@@ -161,23 +161,23 @@ class KpiTrimestral {
         // PERCENTUAL DE COMISSÃO DEVIDO
         if ($scoreTotal >= 100) {
             $comissaoPercent = 100.00;
-            $statusTexto = "🏆 Superou Meta (Acelerador Ativado)";
+            $statusTexto = "Superou Meta (Acelerador Ativado)";
             $acelerador500 = 1;
         } elseif ($scoreTotal >= 85) {
             $comissaoPercent = 100.00;
-            $statusTexto = "✅ Meta Atingida (Elegível Integral)";
+            $statusTexto = "Meta Atingida (Elegível Integral)";
             $acelerador500 = 0;
         } elseif ($scoreTotal >= 70) {
             $comissaoPercent = 80.00;
-            $statusTexto = "⚠️ Desempenho Parcial (-20% Penalizado)";
+            $statusTexto = "Desempenho Parcial (-20% Penalizado)";
             $acelerador500 = 0;
         } elseif ($scoreTotal >= 50) {
             $comissaoPercent = 50.00;
-            $statusTexto = "🔴 Abaixo do Esperado (-50% Penalizado)";
+            $statusTexto = "Abaixo do Esperado (-50% Penalizado)";
             $acelerador500 = 0;
         } else {
             $comissaoPercent = 0.00;
-            $statusTexto = "❌ Sem Elegibilidade no Trimestre";
+            $statusTexto = "Sem Elegibilidade no Trimestre";
             $acelerador500 = 0;
         }
 

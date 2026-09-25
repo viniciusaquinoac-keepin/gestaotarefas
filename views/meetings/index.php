@@ -36,7 +36,7 @@
             </div>
             <ul class="list-group list-group-flush">
                 <?php if(empty($delayedTasks)): ?>
-                    <li class="list-group-item bg-dark text-success border-secondary">Nenhuma tarefa atrasada! 🎉</li>
+                    <li class="list-group-item bg-dark text-success border-secondary"><i class="bi bi-check-circle-fill me-1"></i> Nenhuma tarefa atrasada!</li>
                 <?php else: ?>
                     <?php foreach($delayedTasks as $dt): ?>
                         <li class="list-group-item bg-dark text-light border-secondary">

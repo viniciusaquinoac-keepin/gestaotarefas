@@ -155,11 +155,11 @@ CREATE TABLE IF NOT EXISTS kpis_trimestrais_usuario (
 ### B. Tabela de Apuração do Score e Bônus Acelerador
 | Score Trimestral Acumulado | % da Comissão Paga | Bônus Acelerador Fixo | Status no Sistema |
 | :--- | :--- | :--- | :--- |
-| **100 Pontos (Score Máximo)** | **100% da Comissão** | **+ R$ 500,00 em Dinheiro** | `🏆 Superou Meta (Acelerador Ativado)` |
-| **85 a 99 Pontos** | **100% da Comissão** | R$ 0,00 | `✅ Meta Atingida (Elegível Integral)` |
-| **70 a 84 Pontos** | **80% da Comissão** | R$ 0,00 | `⚠️ Desempenho Parcial (-20% Penalizado)` |
-| **50 a 69 Pontos** | **50% da Comissão** | R$ 0,00 | `🔴 Abaixo do Esperado (-50% Penalizado)` |
-| **< 50 Pontos** | **0% da Comissão** | R$ 0,00 | `❌ Sem Elegibilidade no Trimestre` |
+| **100 Pontos (Score Máximo)** | **100% da Comissão** | **+ R$ 500,00 em Dinheiro** | `Superou Meta (Acelerador Ativado)` |
+| **85 a 99 Pontos** | **100% da Comissão** | R$ 0,00 | `Meta Atingida (Elegível Integral)` |
+| **70 a 84 Pontos** | **80% da Comissão** | R$ 0,00 | `Desempenho Parcial (-20% Penalizado)` |
+| **50 a 69 Pontos** | **50% da Comissão** | R$ 0,00 | `Abaixo do Esperado (-50% Penalizado)` |
+| **< 50 Pontos** | **0% da Comissão** | R$ 0,00 | `Sem Elegibilidade no Trimestre` |
 
 ---
 

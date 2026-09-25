@@ -188,7 +188,7 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
 
                 <?php if ($acelerador): ?>
                     <div class="mt-3 p-2 rounded border border-warning bg-warning bg-opacity-10 text-warning fw-bold animate__animated animate__pulse">
-                        <i class="bi bi-trophy-fill fs-5"></i> 🏆 BÔNUS ACELERADOR DE R$ 500,00 DESTRAVADO!
+                        <i class="bi bi-trophy-fill fs-5 me-1"></i> BÔNUS ACELERADOR DE R$ 500,00 DESTRAVADO!
                     </div>
                 <?php endif; ?>
             </div>
@@ -275,11 +275,11 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
                 </thead>
                 <tbody>
                     <?php foreach ($ranking as $colab): 
-                        // Medalhas para top 3
+                        // Destaque para top 3
                         $posBadge = "<span class='badge bg-secondary'>#{$colab['posicao']}</span>";
-                        if ($colab['posicao'] === 1) $posBadge = "<span class='badge bg-warning text-dark fs-6 fw-bold'>🥇 1º</span>";
-                        elseif ($colab['posicao'] === 2) $posBadge = "<span class='badge bg-light text-dark fs-6 fw-bold'>🥈 2º</span>";
-                        elseif ($colab['posicao'] === 3) $posBadge = "<span class='badge bg-secondary text-light fs-6 fw-bold'>🥉 3º</span>";
+                        if ($colab['posicao'] === 1) $posBadge = "<span class='badge bg-warning text-dark fs-6 fw-bold'><i class='bi bi-trophy-fill me-1'></i> 1º</span>";
+                        elseif ($colab['posicao'] === 2) $posBadge = "<span class='badge bg-light text-dark fs-6 fw-bold'><i class='bi bi-award-fill me-1'></i> 2º</span>";
+                        elseif ($colab['posicao'] === 3) $posBadge = "<span class='badge bg-secondary text-light fs-6 fw-bold'><i class='bi bi-award me-1'></i> 3º</span>";
 
                         $isMe = ($colab['id'] == $currentUser['id']);
                         $rowClass = $isMe ? 'table-primary bg-opacity-25' : '';

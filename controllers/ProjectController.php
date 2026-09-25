@@ -17,7 +17,7 @@ foreach ($requiredModels as $modelFile) {
     $fullPath = __DIR__ . '/../models/' . $modelFile;
     if (!file_exists($fullPath)) {
         die('<div style="background:#212529; color:#f8d7da; padding:20px; border-radius:8px; font-family:sans-serif; margin:20px;">
-            <h3 style="color:#dc3545; margin-top:0;">⚠️ Arquivo do Módulo de Obras Ausente no Servidor</h3>
+            <h3 style="color:#dc3545; margin-top:0;">Arquivo do Módulo de Obras Ausente no Servidor</h3>
             <p>O arquivo <strong>models/' . $modelFile . '</strong> não foi encontrado no servidor Linux em: <code>' . htmlspecialchars($fullPath) . '</code></p>
             <p><strong>Por favor, faça o upload do arquivo <code>models/' . $modelFile . '</code> para a pasta <code>models/</code> no seu servidor (respeitando as letras maiúsculas e minúsculas).</strong></p>
         </div>');

@@ -48,16 +48,16 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
                     <i class="bi bi-kanban me-2"></i> Tarefas (Kanban)
                 </a>
                 <a href="<?= BASE_URL ?>/?page=agenda" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'agenda' ? 'active' : '' ?>">
-                    <i class="bi bi-calendar-week me-2 text-warning"></i> Agenda da Semana
+                    <i class="bi bi-calendar-week me-2"></i> Agenda da Semana
                 </a>
                 <a href="<?= BASE_URL ?>/?page=prospeccao" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'prospeccao' ? 'active' : '' ?>">
-                    <i class="bi bi-crosshair me-2 text-warning"></i> Prospecção (SPIN)
+                    <i class="bi bi-crosshair me-2"></i> Prospecção (SPIN)
                 </a>
                 <a href="<?= BASE_URL ?>/?page=kpis" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'kpis' ? 'active' : '' ?>">
-                    <i class="bi bi-trophy me-2 text-warning"></i> KPIs & Ranking
+                    <i class="bi bi-trophy me-2"></i> KPIs & Ranking
                 </a>
                 <a href="<?= BASE_URL ?>/?page=playbook" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'playbook' ? 'active' : '' ?>">
-                    <i class="bi bi-journal-bookmark me-2 text-info"></i> Playbooks
+                    <i class="bi bi-journal-bookmark me-2"></i> Playbooks
                 </a>
                 <a href="<?= BASE_URL ?>/?page=leads" class="list-group-item list-group-item-action bg-dark text-white <?= $page == 'leads' ? 'active' : '' ?>">
                     <i class="bi bi-funnel me-2"></i> Comercial (Leads Antigos)

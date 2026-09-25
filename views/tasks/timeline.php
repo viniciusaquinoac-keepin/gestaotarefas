@@ -84,7 +84,7 @@
                         <div class="timeline-item position-relative">
                             <span class="position-absolute translate-middle p-2 bg-success border border-light rounded-circle" style="left: -17px;"></span>
                             <div class="text-muted small"><?= $task['completed_at'] ? date('d/m/Y H:i', strtotime($task['completed_at'])) : 'Data desconhecida' ?></div>
-                            <div class="text-success fw-bold">Tarefa concluída! 🎉</div>
+                            <div class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i> Tarefa concluída!</div>
                         </div>
                     <?php endif; ?>
 

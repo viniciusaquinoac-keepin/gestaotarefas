@@ -85,7 +85,7 @@
                         <div class="timeline-item position-relative">
                             <span class="position-absolute translate-middle p-2 bg-success border border-light rounded-circle" style="left: -17px;"></span>
                             <div class="text-muted small"><?= date('d/m/Y H:i', strtotime($lead['updated_at'])) ?></div>
-                            <div class="text-success fw-bold">Lead ganho! 🎉</div>
+                            <div class="text-success fw-bold"><i class="bi bi-trophy-fill me-1"></i> Lead ganho!</div>
                         </div>
                     <?php endif; ?>
 

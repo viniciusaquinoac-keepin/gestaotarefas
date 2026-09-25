@@ -78,7 +78,7 @@ $totalLeads = count($allLeads);
         'Diagnostico' => ['titulo' => 'Diagnóstico (SPIN Opcional)', 'cor' => 'secondary', 'icon' => 'bi-search'],
         'Apresentacao' => ['titulo' => 'Apresentação / Reunião', 'cor' => 'warning', 'icon' => 'bi-easel2'],
         'Proposta' => ['titulo' => 'Proposta Enviada', 'cor' => 'purple', 'icon' => 'bi-file-earmark-text', 'customBg' => 'background-color:#6f42c1 !important; color:#fff !important;'],
-        'Fechado' => ['titulo' => 'Fechado / Ganho 🎉', 'cor' => 'success', 'icon' => 'bi-trophy-fill'],
+        'Fechado' => ['titulo' => 'Fechado / Ganho', 'cor' => 'success', 'icon' => 'bi-trophy-fill'],
         'Perdido' => ['titulo' => 'Perdido / Insucesso', 'cor' => 'danger', 'icon' => 'bi-x-circle']
     ];
 
@@ -618,7 +618,7 @@ $totalLeads = count($allLeads);
                                 <option value="Diagnostico">Diagnóstico (SPIN)</option>
                                 <option value="Apresentacao">Apresentação / Reunião</option>
                                 <option value="Proposta">Proposta Enviada</option>
-                                <option value="Fechado">Fechado / Ganho 🎉</option>
+                                <option value="Fechado">Fechado / Ganho</option>
                                 <option value="Perdido">Perdido / Insucesso</option>
                             </select>
                         </div>
@@ -742,13 +742,13 @@ $totalLeads = count($allLeads);
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Mover para a Etapa:</label>
                         <select name="etapa" id="agendar_nova_etapa" class="form-select bg-dark text-light border-secondary" required onchange="aoMudarEtapaAgendamento(this.value)">
-                            <option value="Prospeccao">📞 Prospecção (Ligações / Contatos)</option>
-                            <option value="Abordagem">🎯 Abordagem / Campo</option>
-                            <option value="Diagnostico">🔍 Diagnóstico (SPIN Opcional)</option>
-                            <option value="Apresentacao">📊 Apresentação / Reunião</option>
-                            <option value="Proposta">📄 Proposta Enviada</option>
-                            <option value="Fechado">🏆 Fechado / Ganho 🎉</option>
-                            <option value="Perdido">❌ Perdido / Insucesso</option>
+                            <option value="Prospeccao">Prospecção (Ligações / Contatos)</option>
+                            <option value="Abordagem">Abordagem / Campo</option>
+                            <option value="Diagnostico">Diagnóstico (SPIN Opcional)</option>
+                            <option value="Apresentacao">Apresentação / Reunião</option>
+                            <option value="Proposta">Proposta Enviada</option>
+                            <option value="Fechado">Fechado / Ganho</option>
+                            <option value="Perdido">Perdido / Insucesso</option>
                         </select>
                     </div>
 
@@ -776,12 +776,12 @@ $totalLeads = count($allLeads);
                             <div class="mb-2">
                                 <label class="form-label small">Tipo de Atividade na Agenda</label>
                                 <select name="tipo_atividade" id="agendar_tipo_atividade" class="form-select form-select-sm bg-dark text-light border-secondary">
-                                    <option value="Ligacao">📞 Ligação</option>
-                                    <option value="Abordagem">🎯 Abordagem Presencial</option>
-                                    <option value="Diagnostico">🔍 Diagnóstico SPIN</option>
-                                    <option value="Apresentacao">📊 Apresentação de Solução</option>
-                                    <option value="Proposta">📄 Envio de Proposta</option>
-                                    <option value="Fechamento">🏆 Fechamento</option>
+                                    <option value="Ligacao">Ligação</option>
+                                    <option value="Abordagem">Abordagem Presencial</option>
+                                    <option value="Diagnostico">Diagnóstico SPIN</option>
+                                    <option value="Apresentacao">Apresentação de Solução</option>
+                                    <option value="Proposta">Envio de Proposta</option>
+                                    <option value="Fechamento">Fechamento</option>
                                 </select>
                             </div>
 

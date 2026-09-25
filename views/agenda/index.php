@@ -366,8 +366,8 @@ $empresaNome = $empresa === 'Autoitec'
                         <th style="width: 12%;">DIAGNÓSTICOS<br><span class="text-secondary fw-normal">(FF / SPIN)</span></th>
                         <th style="width: 12%;">APRESENTAÇÕES<br><span class="text-warning fw-normal">(P / REUNIÕES)</span></th>
                         <th style="width: 12%;">PROPOSTAS<br><span class="text-purple fw-normal" style="color:#b197fc;">(N / ENVIADAS)</span></th>
-                        <th style="width: 12%;">FECHAMENTOS<br><span class="text-success fw-normal">(C / GANHOS 🎉)</span></th>
-                        <th style="width: 12%;">PERDAS<br><span class="text-danger fw-normal">(RECUSAS ❌)</span></th>
+                        <th style="width: 12%;">FECHAMENTOS<br><span class="text-success fw-normal">(C / GANHOS)</span></th>
+                        <th style="width: 12%;">PERDAS<br><span class="text-danger fw-normal">(RECUSAS)</span></th>
                         <th style="width: 16%;">CONVERSÃO & TOTAL<br><span class="text-warning fw-normal">(AP R$ / AC R$)</span></th>
                     </tr>
                 </thead>
@@ -482,27 +482,27 @@ $empresaNome = $empresa === 'Autoitec'
                         </div>
                         <div class="d-flex flex-wrap align-items-center justify-content-between gap-1 text-center" style="font-size: 0.73rem;">
                             <div class="p-1 px-2 rounded bg-info bg-opacity-25 border border-info text-info">
-                                📞 1. Ligação
+                                <i class="bi bi-telephone-fill me-1"></i> 1. Ligação
                             </div>
                             <i class="bi bi-arrow-right text-secondary"></i>
                             <div class="p-1 px-2 rounded bg-primary bg-opacity-25 border border-primary text-light">
-                                🎯 2. Campo
+                                <i class="bi bi-geo-alt-fill me-1"></i> 2. Campo
                             </div>
                             <i class="bi bi-arrow-right text-secondary"></i>
                             <div class="p-1 px-2 rounded bg-info bg-opacity-25 border border-info text-light">
-                                📋 3. Diagnóstico
+                                <i class="bi bi-search me-1"></i> 3. Diagnóstico
                             </div>
                             <i class="bi bi-arrow-right text-secondary"></i>
                             <div class="p-1 px-2 rounded bg-warning bg-opacity-25 border border-warning text-warning">
-                                📊 4. Apresentação
+                                <i class="bi bi-easel2-fill me-1"></i> 4. Apresentação
                             </div>
                             <i class="bi bi-arrow-right text-secondary"></i>
                             <div class="p-1 px-2 rounded bg-purple bg-opacity-25 border text-light" style="border-color:#6f42c1 !important;">
-                                📄 5. Proposta
+                                <i class="bi bi-file-earmark-text-fill me-1"></i> 5. Proposta
                             </div>
                             <i class="bi bi-arrow-right text-secondary"></i>
                             <div class="p-1 px-2 rounded bg-success bg-opacity-25 border border-success text-success fw-bold">
-                                🏆 6. Fechamento
+                                <i class="bi bi-trophy-fill me-1"></i> 6. Fechamento
                             </div>
                         </div>
                     </div>
@@ -551,12 +551,12 @@ $empresaNome = $empresa === 'Autoitec'
                         <div class="col-md-7">
                             <label class="form-label small fw-bold">Tipo de Atividade *</label>
                             <select name="tipo_atividade" id="modal_tipo_atividade" class="form-select bg-dark text-light border-secondary" required>
-                                <option value="Ligacao">📞 Ligação de Prospecção / Contato</option>
-                                <option value="Abordagem">🎯 Abordagem Presencial / Visita</option>
-                                <option value="Diagnostico">🔍 Diagnóstico Técnico (SPIN)</option>
-                                <option value="Apresentacao">📊 Apresentação de Solução / Reunião</option>
-                                <option value="Proposta">📄 Envio de Proposta Comercial</option>
-                                <option value="Fechamento">🏆 Fechamento / Assinatura de Contrato</option>
+                                <option value="Ligacao">Ligação de Prospecção / Contato</option>
+                                <option value="Abordagem">Abordagem Presencial / Visita</option>
+                                <option value="Diagnostico">Diagnóstico Técnico (SPIN)</option>
+                                <option value="Apresentacao">Apresentação de Solução / Reunião</option>
+                                <option value="Proposta">Envio de Proposta Comercial</option>
+                                <option value="Fechamento">Fechamento / Assinatura de Contrato</option>
                             </select>
                         </div>
                         <div class="col-md-5">
@@ -1052,7 +1052,7 @@ function abrirModalJornada(ativId) {
                             ${item.resultado_obs ? `<div class="p-2 bg-secondary bg-opacity-10 rounded border border-secondary small text-light mt-1">${item.resultado_obs}</div>` : ''}
                             ${perdaInfoHtml}
                             <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-secondary small text-secondary" style="font-size: 0.72rem;">
-                                <span>${idx === 0 ? '🏁 Início do ciclo de vida' : `⏱️ +${item.dias_desde_anterior} dia(s) após a etapa anterior`}</span>
+                                <span>${idx === 0 ? '<i class="bi bi-flag-fill me-1 text-info"></i> Início do ciclo de vida' : `<i class="bi bi-stopwatch me-1 text-secondary"></i> +${item.dias_desde_anterior} dia(s) após a etapa anterior`}</span>
                                 <span>Total acumulado: <strong>${item.dias_desde_inicio} dia(s)</strong></span>
                             </div>
                         </div>
