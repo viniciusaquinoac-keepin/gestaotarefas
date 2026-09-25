@@ -16,8 +16,12 @@ class KpiController {
         // Buscar ranking dinâmico de todos os colaboradores para o trimestre
         $ranking = KpiTrimestral::getRanking($trimestre);
 
-        // Obter KPI individual do usuário logado (ou do usuário selecionado na visão individual)
-        $userIdVisao = !empty($_GET['usuario_id']) ? (int)$_GET['usuario_id'] : $currentUser['id'];
+        // Obter KPI individual do usuário logado (ou do usuário selecionado na visão individual se for admin)
+        if (isAdmin()) {
+            $userIdVisao = !empty($_GET['usuario_id']) ? (int)$_GET['usuario_id'] : $currentUser['id'];
+        } else {
+            $userIdVisao = (int)$currentUser['id'];
+        }
         $userKpi = KpiTrimestral::calculateUserKpi($userIdVisao, $trimestre);
 
         // Buscar informações do usuário em foco
@@ -37,6 +41,26 @@ class KpiController {
         // Estatísticas do departamento de Engenharia / Automação (SLA e Abonos)
         $dateRange = KpiTrimestral::getQuarterDateRange($trimestre);
         $prorrogacoesStats = ProrrogacaoTarefa::getStatsByPeriod($dateRange['start_date'], $dateRange['end_date']);
+
+        // Estatísticas consolidadas da Agenda Comercial da equipe no Trimestre
+        $stmtAgendaEquipe = $db->prepare("
+            SELECT 
+                COUNT(*) as total_atividades,
+                SUM(CASE WHEN tipo_atividade = 'Ligacao' AND status_resultado = 'Realizado' THEN 1 ELSE 0 END) as total_ligacoes,
+                SUM(CASE WHEN tipo_atividade = 'Abordagem' AND status_resultado = 'Realizado' THEN 1 ELSE 0 END) as total_abordagens,
+                SUM(CASE WHEN tipo_atividade = 'Apresentacao' AND status_resultado = 'Realizado' THEN 1 ELSE 0 END) as total_apresentacoes,
+                SUM(CASE WHEN tipo_atividade = 'Proposta' AND status_resultado = 'Realizado' THEN 1 ELSE 0 END) as total_propostas,
+                SUM(CASE WHEN tipo_atividade = 'Fechamento' AND status_resultado = 'Realizado' THEN 1 ELSE 0 END) as total_fechamentos,
+                COALESCE(SUM(CASE WHEN tipo_atividade = 'Fechamento' AND status_resultado = 'Realizado' THEN valor_estimado ELSE 0 END), 0) as valor_fechado_total
+            FROM agenda_comercial_semanal
+            WHERE status_resultado = 'Realizado'
+              AND data_agendada BETWEEN :start_date AND :end_date
+        ");
+        $stmtAgendaEquipe->execute([
+            'start_date' => $dateRange['start_date'],
+            'end_date' => $dateRange['end_date']
+        ]);
+        $agendaEquipeStats = $stmtAgendaEquipe->fetch(PDO::FETCH_ASSOC);
 
         require_once __DIR__ . '/../views/layout/header.php';
         require_once __DIR__ . '/../views/kpis_ranking.php';

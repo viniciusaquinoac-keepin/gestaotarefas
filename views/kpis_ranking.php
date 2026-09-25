@@ -89,36 +89,47 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
         </div>
     </div>
 
-    <!-- Card Comercial / Vendas -->
+    <!-- Card Comercial / Agenda Semanal Consolidada -->
     <div class="col-md-6">
         <div class="card bg-dark border-secondary h-100 shadow-sm">
             <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center py-2">
-                <span class="text-warning fw-bold small"><i class="bi bi-briefcase-fill me-1"></i> Comercial & Expansão de Mercado</span>
-                <span class="badge bg-secondary">Vendas & Campo</span>
+                <span class="text-warning fw-bold small"><i class="bi bi-calendar-check-fill me-1"></i> Comercial & Agenda Semanal (Consolidado)</span>
+                <span class="badge bg-secondary">Equipe no Trimestre</span>
             </div>
             <div class="card-body p-3">
                 <div class="row g-2 text-center">
-                    <div class="col-4">
+                    <div class="col-3">
                         <div class="bg-secondary bg-opacity-10 rounded p-2 border border-secondary">
-                            <div class="text-secondary small" style="font-size: 0.75rem;">Meta Fechamento</div>
-                            <div class="fs-5 fw-bold text-light">40 Pts</div>
+                            <div class="text-secondary small" style="font-size: 0.72rem;">Ligações</div>
+                            <div class="fs-5 fw-bold text-light"><?= (int)($agendaEquipeStats['total_ligacoes'] ?? 0) ?></div>
                         </div>
                     </div>
-                    <div class="col-4">
+                    <div class="col-3">
                         <div class="bg-secondary bg-opacity-10 rounded p-2 border border-secondary">
-                            <div class="text-secondary small" style="font-size: 0.75rem;">Meta Pontualidade</div>
-                            <div class="fs-5 fw-bold text-light">30 Pts</div>
+                            <div class="text-secondary small" style="font-size: 0.72rem;">Abordagens</div>
+                            <div class="fs-5 fw-bold text-info"><?= (int)($agendaEquipeStats['total_abordagens'] ?? 0) ?></div>
                         </div>
                     </div>
-                    <div class="col-4">
+                    <div class="col-3">
                         <div class="bg-secondary bg-opacity-10 rounded p-2 border border-secondary">
-                            <div class="text-secondary small" style="font-size: 0.75rem;">Meta 15 Visitas/sem</div>
-                            <div class="fs-5 fw-bold text-light">30 Pts</div>
+                            <div class="text-secondary small" style="font-size: 0.72rem;">Propostas</div>
+                            <div class="fs-5 fw-bold text-warning"><?= (int)($agendaEquipeStats['total_propostas'] ?? 0) ?></div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="bg-success bg-opacity-10 rounded p-2 border border-success">
+                            <div class="text-success small" style="font-size: 0.72rem;">Fechamentos</div>
+                            <div class="fs-5 fw-bold text-success"><?= (int)($agendaEquipeStats['total_fechamentos'] ?? 0) ?></div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-3 small text-secondary">
-                    <i class="bi bi-lightning-charge-fill text-warning"></i> <strong>Acelerador Fixo:</strong> Ao atingir <strong>100 Pontos</strong> no trimestre, o colaborador destrava <strong>R$ 500,00</strong> em dinheiro + 100% da comissão devida!
+                <div class="mt-3 d-flex justify-content-between align-items-center small text-secondary">
+                    <div>
+                        <i class="bi bi-cash-stack text-success me-1"></i> Total Fechado: <strong class="text-light">R$ <?= number_format((float)($agendaEquipeStats['valor_fechado_total'] ?? 0), 2, ',', '.') ?></strong>
+                    </div>
+                    <div>
+                        <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Acelerador 100 Pts: <strong class="text-light">R$ 500,00</strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -138,6 +149,7 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
             </div>
         </div>
 
+        <?php if (isAdmin()): ?>
         <!-- Seletor de Colaborador para Gestão -->
         <form method="GET" action="<?= BASE_URL ?>/" class="d-flex align-items-center gap-2">
             <input type="hidden" name="page" value="kpis">
@@ -151,6 +163,7 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
                 <?php endforeach; ?>
             </select>
         </form>
+        <?php endif; ?>
     </div>
     <div class="card-body p-4">
         <div class="row align-items-center">
@@ -214,12 +227,13 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
 
                 <!-- 3 Pilares de Pontuação -->
                 <div class="row g-2">
-                    <!-- 1. Vendas / Fechamento -->
+                    <!-- 1. Fechamentos na Agenda -->
                     <div class="col-md-4">
                         <div class="bg-dark border border-secondary rounded p-3 text-center h-100">
-                            <span class="text-secondary small d-block">1. Vendas Fechadas</span>
+                            <span class="text-secondary small d-block">1. Fechamentos (Agenda)</span>
                             <div class="fs-4 fw-bold text-primary my-1"><?= $userKpi['pontos_vendas'] ?> <span class="fs-6 text-secondary">/ 40 pts</span></div>
-                            <span class="small text-secondary"><?= $userKpi['total_fechados'] ?> contratos</span>
+                            <span class="small text-secondary d-block"><?= $userKpi['total_fechados'] ?> contratos</span>
+                            <span class="small text-success" style="font-size: 0.72rem;">R$ <?= number_format((float)($userKpi['valor_fechado_total'] ?? 0), 2, ',', '.') ?></span>
                         </div>
                     </div>
 
@@ -228,16 +242,20 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
                         <div class="bg-dark border border-secondary rounded p-3 text-center h-100">
                             <span class="text-secondary small d-block">2. SLA & OTIF Prazos</span>
                             <div class="fs-4 fw-bold text-info my-1"><?= $userKpi['pontos_sla_otif'] ?> <span class="fs-6 text-secondary">/ 30 pts</span></div>
-                            <span class="small text-success"><?= $userKpi['prorrogacoes_abonadas'] ?> abonadas</span>
+                            <span class="small text-success d-block"><?= $userKpi['prorrogacoes_abonadas'] ?> abonadas</span>
+                            <span class="small text-secondary" style="font-size: 0.72rem;">Conformidade interna</span>
                         </div>
                     </div>
 
-                    <!-- 3. Visitas de Campo -->
+                    <!-- 3. Agenda Comercial Semanal -->
                     <div class="col-md-4">
                         <div class="bg-dark border border-secondary rounded p-3 text-center h-100">
-                            <span class="text-secondary small d-block">3. Visitas de Campo</span>
+                            <span class="text-secondary small d-block">3. Agenda Executada</span>
                             <div class="fs-4 fw-bold text-warning my-1"><?= $userKpi['pontos_visitas'] ?> <span class="fs-6 text-secondary">/ 30 pts</span></div>
-                            <span class="small text-secondary"><?= $userKpi['total_visitas'] ?> check-ins</span>
+                            <span class="small text-secondary d-block"><?= (int)($userKpi['total_atividades_agenda'] ?? 0) ?> realizadas</span>
+                            <span class="small text-secondary" style="font-size: 0.70rem;">
+                                <?= (int)($userKpi['total_ligacoes'] ?? 0) ?> lig • <?= (int)($userKpi['total_abordagens'] ?? 0) ?> abord • <?= (int)($userKpi['total_propostas'] ?? 0) ?> prop
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -265,9 +283,9 @@ elseif ($score >= 50) $scoreColor = '#fd7e14'; // laranja
                         <th class="text-center" style="width: 70px;">POSIÇÃO</th>
                         <th>COLABORADOR</th>
                         <th>DEPARTAMENTO</th>
-                        <th class="text-center">VENDAS (MÁX 40)</th>
+                        <th class="text-center">FECHAMENTOS (MÁX 40)</th>
                         <th class="text-center">SLA/OTIF (MÁX 30)</th>
-                        <th class="text-center">VISITAS (MÁX 30)</th>
+                        <th class="text-center">AGENDA (MÁX 30)</th>
                         <th class="text-center">SCORE TOTAL</th>
                         <th class="text-center">COMISSÃO DEVIDA</th>
                         <th class="text-center">ACELERADOR R$ 500</th>

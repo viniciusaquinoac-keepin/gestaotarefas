@@ -66,41 +66,77 @@ class KpiTrimestral {
         }
         $range = self::getQuarterDateRange($quarter);
 
-        // 1. PONTUAÇÃO DE VENDAS / FECHAMENTOS (Máx 40 pts)
-        // Cada lead fechado na prospecção vale 10 pts (ou proporcional ao valor)
+        // 1. PONTUAÇÃO DE VENDAS / FECHAMENTOS NA AGENDA (Máx 40 pts)
+        // Busca na tabela agenda_comercial_semanal os fechamentos realizados no trimestre
         $stmtVendas = $db->prepare("
             SELECT COUNT(*) as total_fechados, COALESCE(SUM(valor_estimado), 0) as valor_fechado
-            FROM prospeccao_leads
+            FROM agenda_comercial_semanal
             WHERE vendedor_id = :user_id
-              AND etapa_funil = 'Fechado'
-              AND data_atualizacao BETWEEN :start AND :end
+              AND tipo_atividade = 'Fechamento'
+              AND status_resultado = 'Realizado'
+              AND data_agendada BETWEEN :start_date AND :end_date
         ");
         $stmtVendas->execute([
             'user_id' => $userId,
-            'start' => $range['start'],
-            'end' => $range['end']
+            'start_date' => $range['start_date'],
+            'end_date' => $range['end_date']
         ]);
         $vendasData = $stmtVendas->fetch(PDO::FETCH_ASSOC);
         $totalFechados = (int)($vendasData['total_fechados'] ?? 0);
         $valorFechado = (float)($vendasData['valor_fechado'] ?? 0);
         
-        // 10 pts por lead fechado, com bônus de valor (teto 40 pts)
+        // 10 pts por fechamento realizado na agenda + bônus de volume (teto 40 pts)
         $pontosVendas = min(40, ($totalFechados * 10) + (int)floor($valorFechado / 10000));
 
-        // 2. PONTUAÇÃO DE VISITAS PRESENCIAIS DE CAMPO (Máx 30 pts)
-        // 2 pts por visita presencial registrada (meta de 15 visitas = 30 pts)
-        $stmtVisitas = $db->prepare("
-            SELECT COUNT(*) FROM visitas_campo_keepin
+        // 2. PONTUAÇÃO DE ATIVIDADES CONSOLIDADAS DA AGENDA COMERCIAL (Máx 30 pts)
+        // Busca a execução das atividades planejadas e realizadas na agenda (Ligações, Abordagens, Apresentações e Propostas)
+        $stmtAgenda = $db->prepare("
+            SELECT 
+                tipo_atividade,
+                COUNT(*) as qtd,
+                COALESCE(SUM(valor_estimado), 0) as total_valor
+            FROM agenda_comercial_semanal
             WHERE vendedor_id = :user_id
-              AND data_visita BETWEEN :start AND :end
+              AND status_resultado = 'Realizado'
+              AND data_agendada BETWEEN :start_date AND :end_date
+            GROUP BY tipo_atividade
         ");
-        $stmtVisitas->execute([
+        $stmtAgenda->execute([
             'user_id' => $userId,
-            'start' => $range['start'],
-            'end' => $range['end']
+            'start_date' => $range['start_date'],
+            'end_date' => $range['end_date']
         ]);
-        $totalVisitas = (int)$stmtVisitas->fetchColumn();
-        $pontosVisitas = min(30, $totalVisitas * 2);
+        $agendaRows = $stmtAgenda->fetchAll(PDO::FETCH_ASSOC);
+
+        $totalLigacoes = 0;
+        $totalAbordagens = 0;
+        $totalDiagnosticos = 0;
+        $totalApresentacoes = 0;
+        $totalPropostas = 0;
+        $totalAtividadesAgenda = 0;
+
+        foreach ($agendaRows as $row) {
+            $t = $row['tipo_atividade'];
+            $q = (int)$row['qtd'];
+            $totalAtividadesAgenda += $q;
+
+            if (stripos($t, 'liga') !== false) {
+                $totalLigacoes += $q;
+            } elseif (stripos($t, 'abord') !== false) {
+                $totalAbordagens += $q;
+            } elseif (stripos($t, 'diag') !== false || stripos($t, 'spin') !== false) {
+                $totalDiagnosticos += $q;
+            } elseif (stripos($t, 'apres') !== false) {
+                $totalApresentacoes += $q;
+            } elseif (stripos($t, 'prop') !== false) {
+                $totalPropostas += $q;
+            }
+        }
+
+        // Pontuação de Execução da Agenda (Prudential):
+        // Abordagens presenciais, Diagnósticos e Apresentações = 2 pts cada
+        // Ligações e Propostas enviadas = 1 pt cada
+        $pontosVisitas = min(30, ($totalAbordagens * 2) + ($totalApresentacoes * 2) + ($totalDiagnosticos * 2) + ($totalLigacoes * 1) + ($totalPropostas * 1));
 
         // 3. PONTUAÇÃO DE SLA / OTIF (Máx 30 pts)
         // Avalia tarefas atribuídas ao usuário com vencimento no trimestre
@@ -240,7 +276,13 @@ class KpiTrimestral {
             'status_texto' => $statusTexto,
             'total_fechados' => $totalFechados,
             'valor_fechado' => $valorFechado,
-            'total_visitas' => $totalVisitas,
+            'total_visitas' => $totalAbordagens,
+            'total_atividades_agenda' => $totalAtividadesAgenda,
+            'total_ligacoes' => $totalLigacoes,
+            'total_abordagens' => $totalAbordagens,
+            'total_diagnosticos' => $totalDiagnosticos,
+            'total_apresentacoes' => $totalApresentacoes,
+            'total_propostas' => $totalPropostas,
             'total_tasks' => $totalTasks,
             'prorrogacoes_abonadas' => $totalProrrogacoesAbonadas ?? 0,
             'prorrogacoes_penalizadas' => $totalProrrogacoesNaoAbonadas ?? 0
