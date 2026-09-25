@@ -18,9 +18,18 @@ class TimelineController {
             die("Tarefa não encontrada.");
         }
 
+        // Restrição de acesso para usuário de nível comum
+        if (!isAdmin() && (int)$task['assigned_to'] !== (int)$_SESSION['user_id'] && (int)$task['created_by'] !== (int)$_SESSION['user_id']) {
+            die("Acesso restrito. Você só tem permissão para visualizar tarefas do seu próprio usuário.");
+        }
+
         $history = TaskHistory::getByTask($taskId);
         
-        $users = $db->query("SELECT id, name FROM users WHERE active = 1")->fetchAll();
+        if (isAdmin()) {
+            $users = $db->query("SELECT id, name FROM users WHERE active = 1 ORDER BY name ASC")->fetchAll();
+        } else {
+            $users = $db->query("SELECT id, name FROM users WHERE id = " . (int)$_SESSION['user_id'])->fetchAll();
+        }
 
         require_once __DIR__ . '/../views/layout/header.php';
         require_once __DIR__ . '/../views/tasks/timeline.php';

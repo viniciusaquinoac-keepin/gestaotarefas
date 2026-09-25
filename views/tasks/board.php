@@ -1,6 +1,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 text-light mb-0">Tarefas</h1>
     <div class="d-flex gap-2">
+        <?php if (isAdmin()): ?>
         <select id="userFilter" class="form-select bg-dark text-light border-secondary" style="width: auto;">
             <option value="">Todos os usuários</option>
             <option value="unassigned">Sem Responsável</option>
@@ -8,6 +9,11 @@
                 <option value="<?= $u['id'] ?>"><?= htmlspecialchars($u['name']) ?></option>
             <?php endforeach; ?>
         </select>
+        <?php else: ?>
+        <span class="badge bg-secondary p-2 border border-secondary text-light d-flex align-items-center">
+            <i class="bi bi-person-fill text-warning me-1"></i> Minhas Tarefas
+        </span>
+        <?php endif; ?>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newTaskModal">
             <i class="bi bi-plus-lg"></i> Nova Tarefa
         </button>
@@ -117,12 +123,17 @@
                     <div class="row mb-3">
                         <div class="col">
                             <label class="form-label">Responsável</label>
+                            <?php if (isAdmin()): ?>
                             <select name="assigned_to" class="form-select bg-dark text-light border-secondary">
                                 <option value="">Sem responsável</option>
                                 <?php foreach($users as $u): ?>
                                     <option value="<?= $u['id'] ?>"><?= htmlspecialchars($u['name']) ?></option>
                                 <?php endforeach; ?>
                             </select>
+                            <?php else: ?>
+                            <input type="hidden" name="assigned_to" value="<?= htmlspecialchars($_SESSION['user_id']) ?>">
+                            <input type="text" class="form-control bg-dark text-light border-secondary" value="<?= htmlspecialchars(getCurrentUser()['name'] ?? 'Meu Usuário') ?>" readonly disabled>
+                            <?php endif; ?>
                         </div>
                         <div class="col">
                             <label class="form-label">Prazo</label>
@@ -173,51 +184,53 @@
 </script>
 <script src="<?= BASE_URL ?>/assets/js/kanban.js"></script>
 <script>
-document.getElementById('userFilter').addEventListener('change', function() {
-    const userId = this.value;
-    const cards = document.querySelectorAll('.kanban-card');
-    
-    // Save to cookie
-    document.cookie = "taskUserFilter=" + userId + "; path=/; max-age=2592000";
-    
-    cards.forEach(card => {
-        if (userId === '') {
-            card.style.display = '';
-        } else if (userId === 'unassigned') {
-            if (card.dataset.userId === '') {
+const userFilterElem = document.getElementById('userFilter');
+if (userFilterElem) {
+    userFilterElem.addEventListener('change', function() {
+        const userId = this.value;
+        const cards = document.querySelectorAll('.kanban-card');
+        
+        // Save to cookie
+        document.cookie = "taskUserFilter=" + userId + "; path=/; max-age=2592000";
+        
+        cards.forEach(card => {
+            if (userId === '') {
                 card.style.display = '';
+            } else if (userId === 'unassigned') {
+                if (card.dataset.userId === '') {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
             } else {
-                card.style.display = 'none';
+                const mentionedIds = card.dataset.mentionedUserId ? card.dataset.mentionedUserId.split(',') : [];
+                if (card.dataset.userId === userId || mentionedIds.includes(userId)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
             }
-        } else {
-            const mentionedIds = card.dataset.mentionedUserId ? card.dataset.mentionedUserId.split(',') : [];
-            if (card.dataset.userId === userId || mentionedIds.includes(userId)) {
-                card.style.display = '';
-            } else {
-                card.style.display = 'none';
-            }
-        }
+        });
+        
+        // Atualizar contadores das colunas
+        const columns = document.querySelectorAll('.kanban-column');
+        columns.forEach(col => {
+            const count = Array.from(col.querySelectorAll('.kanban-card')).filter(c => c.style.display !== 'none').length;
+            const badge = col.closest('.card').querySelector('.badge');
+            if(badge) badge.textContent = count;
+        });
     });
-    
-    // Atualizar contadores das colunas
-    const columns = document.querySelectorAll('.kanban-column');
-    columns.forEach(col => {
-        const count = Array.from(col.querySelectorAll('.kanban-card')).filter(c => c.style.display !== 'none').length;
-        const badge = col.closest('.card').querySelector('.badge');
-        if(badge) badge.textContent = count;
-    });
-});
 
-// Load filter from cookie on page load
-window.addEventListener('DOMContentLoaded', () => {
-    const match = document.cookie.match(new RegExp('(^| )taskUserFilter=([^;]+)'));
-    if (match) {
-        const filterVal = match[2];
-        const select = document.getElementById('userFilter');
-        if (select.querySelector(`option[value="${filterVal}"]`)) {
-            select.value = filterVal;
-            select.dispatchEvent(new Event('change'));
+    // Load filter from cookie on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        const match = document.cookie.match(new RegExp('(^| )taskUserFilter=([^;]+)'));
+        if (match) {
+            const filterVal = match[2];
+            if (userFilterElem.querySelector(`option[value="${filterVal}"]`)) {
+                userFilterElem.value = filterVal;
+                userFilterElem.dispatchEvent(new Event('change'));
+            }
         }
-    }
-});
+    });
+}
 </script>

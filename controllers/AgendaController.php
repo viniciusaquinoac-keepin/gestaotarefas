@@ -13,8 +13,13 @@ class AgendaController {
         $refDate = $_GET['data_ref'] ?? date('Y-m-d');
         $boundaries = AgendaSemanal::getWeekBoundaries($refDate);
 
-        // Filtros
-        $vendedorId = !empty($_GET['vendedor_id']) ? (int)$_GET['vendedor_id'] : null;
+        // Filtro de Vendedor: se usuário comum, restrito estritamente a si mesmo
+        if (isAdmin()) {
+            $vendedorId = !empty($_GET['vendedor_id']) ? (int)$_GET['vendedor_id'] : null;
+        } else {
+            $vendedorId = (int)$_SESSION['user_id'];
+        }
+
         $empresa = $_GET['empresa'] ?? null;
         if ($empresa && !in_array($empresa, ['Autoitec', 'Keepin'])) {
             $empresa = null;
@@ -26,9 +31,13 @@ class AgendaController {
         // Buscar o quadro de resumo semanal (estilo Prudential)
         $resumo = AgendaSemanal::getResumoSemana($boundaries['monday'], $boundaries['sunday'], $vendedorId, $empresa);
 
-        // Lista de usuários para o filtro
+        // Lista de usuários para o filtro e formulários
         $db = Database::getConnection();
-        $users = $db->query("SELECT id, name, department, avatar_color FROM users WHERE active = 1 ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+        if (isAdmin()) {
+            $users = $db->query("SELECT id, name, department, avatar_color FROM users WHERE active = 1 ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $users = $db->query("SELECT id, name, department, avatar_color FROM users WHERE id = " . (int)$_SESSION['user_id'])->fetchAll(PDO::FETCH_ASSOC);
+        }
 
         // Leads recentes para auto-completar ou vincular agendamento
         $leadsRecentes = ProspeccaoLead::getAll($empresa, $vendedorId);
@@ -41,8 +50,9 @@ class AgendaController {
     public function create() {
         requireAuth();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $userId = $_SESSION['user_id'];
-            $vendedor = !empty($_POST['vendedor_id']) ? (int)$_POST['vendedor_id'] : $userId;
+            $userId = (int)$_SESSION['user_id'];
+            // Se usuário comum, vincula obrigatoriamente a si mesmo
+            $vendedor = !isAdmin() ? $userId : (!empty($_POST['vendedor_id']) ? (int)$_POST['vendedor_id'] : $userId);
             $leadId = !empty($_POST['lead_id']) ? (int)$_POST['lead_id'] : null;
             $tipoAtividade = $_POST['tipo_atividade'];
             $empresaAlvo = $_POST['empresa_alvo'] ?? 'Autoitec';
@@ -97,6 +107,26 @@ class AgendaController {
             $id = (int)$_POST['atividade_id'];
             $status = $_POST['status_resultado'];
             $obs = $_POST['resultado_obs'] ?? null;
+            $userId = (int)$_SESSION['user_id'];
+
+            $ativ = AgendaSemanal::getById($id);
+            if (!$ativ) {
+                if (!empty($_POST['is_ajax'])) {
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'error' => 'Atividade não encontrada']);
+                    exit;
+                }
+                die("Atividade não encontrada.");
+            }
+
+            if (!isAdmin() && (int)$ativ['vendedor_id'] !== $userId) {
+                if (!empty($_POST['is_ajax'])) {
+                    http_response_code(403);
+                    echo json_encode(['success' => false, 'error' => 'Acesso negado. Você só pode gerenciar compromissos da sua própria agenda.']);
+                    exit;
+                }
+                die("Acesso negado. Você só pode gerenciar compromissos da sua própria agenda.");
+            }
 
             AgendaSemanal::updateStatus($id, $status, $obs);
 
@@ -120,6 +150,16 @@ class AgendaController {
             $novaData = $_POST['nova_data'];
             $novoHorario = $_POST['novo_horario'] ?: '09:00';
             $motivo = $_POST['motivo_reagendamento'] ?? null;
+            $userId = (int)$_SESSION['user_id'];
+
+            $ativ = AgendaSemanal::getById($id);
+            if (!$ativ) {
+                die("Atividade não encontrada.");
+            }
+
+            if (!isAdmin() && (int)$ativ['vendedor_id'] !== $userId) {
+                die("Acesso negado. Você só pode reagendar compromissos da sua própria agenda.");
+            }
 
             AgendaSemanal::reagendar($id, $novaData, $novoHorario, $motivo);
 
@@ -134,6 +174,17 @@ class AgendaController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = (int)$_POST['atividade_id'];
             $redirectDate = $_POST['data_ref'] ?? date('Y-m-d');
+            $userId = (int)$_SESSION['user_id'];
+
+            $ativ = AgendaSemanal::getById($id);
+            if (!$ativ) {
+                die("Atividade não encontrada.");
+            }
+
+            if (!isAdmin() && (int)$ativ['vendedor_id'] !== $userId) {
+                die("Acesso negado. Você só pode excluir compromissos da sua própria agenda.");
+            }
+
             AgendaSemanal::delete($id);
 
             $empresaParam = !empty($_POST['empresa']) ? '&empresa=' . urlencode($_POST['empresa']) : '';
@@ -149,7 +200,16 @@ class AgendaController {
             $motivoPerda = $_POST['motivo_perda'];
             $motivoPerdaObs = $_POST['motivo_perda_obs'] ?? null;
             $dataRecontato = !empty($_POST['data_recontato_futuro']) ? $_POST['data_recontato_futuro'] : null;
-            $userId = $_SESSION['user_id'];
+            $userId = (int)$_SESSION['user_id'];
+
+            $ativ = AgendaSemanal::getById($id);
+            if (!$ativ) {
+                die("Atividade não encontrada.");
+            }
+
+            if (!isAdmin() && (int)$ativ['vendedor_id'] !== $userId) {
+                die("Acesso negado. Você só pode registrar perda de compromissos da sua própria agenda.");
+            }
 
             AgendaSemanal::registrarPerda($id, $motivoPerda, $motivoPerdaObs, $dataRecontato, $userId);
 
@@ -163,6 +223,23 @@ class AgendaController {
     public function ciclo_vida() {
         requireAuth();
         $id = (int)($_GET['id'] ?? 0);
+        $userId = (int)$_SESSION['user_id'];
+
+        $ativ = AgendaSemanal::getById($id);
+        if (!$ativ) {
+            header('Content-Type: application/json');
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Atividade não encontrada']);
+            exit;
+        }
+
+        if (!isAdmin() && (int)$ativ['vendedor_id'] !== $userId) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Acesso negado']);
+            exit;
+        }
+
         $cadeia = AgendaSemanal::getCadeiaCicloVida($id);
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'cadeia' => $cadeia]);

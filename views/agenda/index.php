@@ -73,6 +73,7 @@ $empresaNome = $empresa === 'Autoitec'
                 <span class="text-secondary small fw-bold"><i class="bi bi-funnel"></i> Filtrar:</span>
             </div>
 
+            <?php if (isAdmin()): ?>
             <div class="col-md-3">
                 <select name="vendedor_id" class="form-select form-select-sm bg-dark text-light border-secondary" onchange="this.form.submit()">
                     <option value="">Todos os Vendedores</option>
@@ -83,6 +84,14 @@ $empresaNome = $empresa === 'Autoitec'
                     <?php endforeach; ?>
                 </select>
             </div>
+            <?php else: ?>
+            <input type="hidden" name="vendedor_id" value="<?= htmlspecialchars($_SESSION['user_id']) ?>">
+            <div class="col-auto">
+                <span class="badge bg-secondary p-2 border border-secondary text-light">
+                    <i class="bi bi-person-fill text-warning me-1"></i> Minha Agenda: <strong><?= htmlspecialchars($currentUser['name'] ?? 'Meu Usuário') ?></strong>
+                </span>
+            </div>
+            <?php endif; ?>
 
             <div class="col-md-3">
                 <select name="empresa" class="form-select form-select-sm bg-dark text-light border-secondary" onchange="this.form.submit()">
@@ -604,6 +613,7 @@ $empresaNome = $empresa === 'Autoitec'
 
                     <div class="mb-3">
                         <label class="form-label small">Vendedor Responsável</label>
+                        <?php if (isAdmin()): ?>
                         <select name="vendedor_id" id="modal_vendedor_id" class="form-select bg-dark text-light border-secondary">
                             <?php foreach ($users as $u): ?>
                                 <option value="<?= $u['id'] ?>" <?= ($u['id'] == $_SESSION['user_id']) ? 'selected' : '' ?>>
@@ -611,6 +621,10 @@ $empresaNome = $empresa === 'Autoitec'
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <?php else: ?>
+                        <input type="hidden" name="vendedor_id" id="modal_vendedor_id" value="<?= htmlspecialchars($_SESSION['user_id']) ?>">
+                        <input type="text" class="form-control bg-dark text-light border-secondary" value="<?= htmlspecialchars($currentUser['name'] ?? 'Meu Usuário') ?>" readonly disabled>
+                        <?php endif; ?>
                     </div>
 
                     <div class="mb-3">

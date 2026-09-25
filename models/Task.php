@@ -2,7 +2,14 @@
 require_once __DIR__ . '/../database.php';
 
 class Task {
-    public static function getAll() {
+    public static function getById($id) {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("SELECT * FROM tasks WHERE id = :id");
+        $stmt->execute(['id' => (int)$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public static function getAll($userId = null) {
         $db = Database::getConnection();
         $start = getGlobalFilterStart();
         $end = getGlobalFilterEnd();
@@ -12,6 +19,15 @@ class Task {
             $dateFilter = "WHERE ((DATE(t.created_at) >= :start AND DATE(t.created_at) <= :end) OR (DATE(t.due_date) >= :start AND DATE(t.due_date) <= :end) OR (DATE(t.completed_at) >= :start AND DATE(t.completed_at) <= :end))";
         }
 
+        $userFilterSql = "";
+        $params = ['start' => $start];
+        if (!empty($end)) $params['end'] = $end;
+
+        if ($userId) {
+            $userFilterSql = "AND (t.assigned_to = :user_id OR t.created_by = :user_id)";
+            $params['user_id'] = (int)$userId;
+        }
+
         $stmt = $db->prepare("
             SELECT t.*, u.name as assigned_name, u.avatar_color,
                    (SELECT GROUP_CONCAT(DISTINCT mu.id || '::' || mu.name || '::' || mu.avatar_color) FROM task_history th JOIN users mu ON th.mentioned_user_id = mu.id WHERE th.task_id = t.id AND th.mentioned_user_id IS NOT NULL) as mentioned_users_data,
@@ -19,18 +35,16 @@ class Task {
             FROM tasks t 
             LEFT JOIN users u ON t.assigned_to = u.id 
             $dateFilter
+            $userFilterSql
             ORDER BY t.position ASC, t.id DESC
         ");
-        
-        $params = ['start' => $start];
-        if (!empty($end)) $params['end'] = $end;
         
         $stmt->execute($params);
         $tasks = $stmt->fetchAll();
         return self::processMentions($tasks);
     }
 
-    public static function getByStatus($status) {
+    public static function getByStatus($status, $userId = null) {
         $db = Database::getConnection();
         $start = getGlobalFilterStart();
         $end = getGlobalFilterEnd();
@@ -38,6 +52,15 @@ class Task {
         $dateFilter = "AND (DATE(t.created_at) >= :start OR DATE(t.due_date) >= :start OR DATE(t.completed_at) >= :start)";
         if (!empty($end)) {
             $dateFilter = "AND ((DATE(t.created_at) >= :start AND DATE(t.created_at) <= :end) OR (DATE(t.due_date) >= :start AND DATE(t.due_date) <= :end) OR (DATE(t.completed_at) >= :start AND DATE(t.completed_at) <= :end))";
+        }
+
+        $userFilterSql = "";
+        $params = ['status' => $status, 'start' => $start];
+        if (!empty($end)) $params['end'] = $end;
+
+        if ($userId) {
+            $userFilterSql = "AND (t.assigned_to = :user_id OR t.created_by = :user_id)";
+            $params['user_id'] = (int)$userId;
         }
 
         $stmt = $db->prepare("
@@ -48,11 +71,9 @@ class Task {
             LEFT JOIN users u ON t.assigned_to = u.id 
             WHERE t.status = :status 
             $dateFilter
+            $userFilterSql
             ORDER BY t.position ASC, t.id DESC
         ");
-        
-        $params = ['status' => $status, 'start' => $start];
-        if (!empty($end)) $params['end'] = $end;
         
         $stmt->execute($params);
         $tasks = $stmt->fetchAll();
