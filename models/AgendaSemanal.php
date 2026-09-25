@@ -137,6 +137,12 @@ class AgendaSemanal {
             'total_realizadas' => 0,
             'taxa_conversao' => 0,
             'valor_fechado_semana' => 0,
+            // Métricas de Perdas da Semana
+            'perdas' => [
+                'total' => 0,
+                'valor' => 0,
+                'motivos' => []
+            ],
             // Métricas de Tempo Médio de Ciclo de Venda
             'tempo_medio_fechamento' => null,
             'min_ciclo_fechamento' => null,
@@ -153,6 +159,9 @@ class AgendaSemanal {
             $resumo['total_atividades'] += $qtd;
             if ($status === 'Realizado') {
                 $resumo['total_realizadas'] += $qtd;
+            } elseif ($status === 'Perdido') {
+                $resumo['perdas']['total'] += $qtd;
+                $resumo['perdas']['valor'] += $valor;
             }
 
             if (strpos($tipo, 'liga') !== false) {
@@ -182,6 +191,30 @@ class AgendaSemanal {
                 }
             }
         }
+
+        // Buscar detalhes e motivos de perdas na semana
+        $sqlPerdas = "
+            SELECT motivo_perda, COUNT(*) as qtd, COALESCE(SUM(valor_estimado), 0) as total_valor
+            FROM agenda_comercial_semanal
+            WHERE data_agendada BETWEEN :monday AND :sunday
+              AND status_resultado = 'Perdido'
+        ";
+        $paramsPerdas = [
+            'monday' => $mondayDate,
+            'sunday' => $sundayDate
+        ];
+        if ($vendedorId) {
+            $sqlPerdas .= " AND vendedor_id = :vendedor_id";
+            $paramsPerdas['vendedor_id'] = $vendedorId;
+        }
+        if ($empresa && in_array($empresa, ['Autoitec', 'Keepin'])) {
+            $sqlPerdas .= " AND empresa_alvo = :empresa";
+            $paramsPerdas['empresa'] = $empresa;
+        }
+        $sqlPerdas .= " GROUP BY motivo_perda ORDER BY qtd DESC";
+        $stmtPerdas = $db->prepare($sqlPerdas);
+        $stmtPerdas->execute($paramsPerdas);
+        $resumo['perdas']['motivos'] = $stmtPerdas->fetchAll(PDO::FETCH_ASSOC);
 
         // Taxa de conversão: Fechamentos Realizados / Abordagens Realizadas (ou Propostas Realizadas)
         if ($resumo['abordagens']['realizadas'] > 0) {
@@ -367,6 +400,62 @@ class AgendaSemanal {
             'obs' => $obs,
             'id' => $id
         ]);
+    }
+
+    public static function registrarPerda($id, $motivoPerda, $motivoPerdaObs = null, $dataRecontato = null, $userId = null) {
+        $db = Database::getConnection();
+        $ativ = self::getById($id);
+        if (!$ativ) return false;
+
+        $recontatoTaskId = null;
+
+        // Se informou data de recontato futuro, cria tarefa no Kanban para não perder a oportunidade
+        if (!empty($dataRecontato)) {
+            require_once __DIR__ . '/Task.php';
+            $taskTitle = "[Recontato Comercial] {$ativ['cliente_nome']}";
+            $taskDesc = "Recontato agendado após perda da oportunidade.\nMotivo: {$motivoPerda}\nObservações: {$motivoPerdaObs}\nContato: {$ativ['contato_nome']} ({$ativ['contato_telefone']})\nEmpresa: {$ativ['empresa_alvo']}";
+            $vendedor = $ativ['vendedor_id'] ?: ($userId ?: 1);
+
+            $taskData = [
+                'title' => $taskTitle,
+                'description' => $taskDesc,
+                'department' => 'Comercial',
+                'priority' => 'high',
+                'assigned_to' => $vendedor,
+                'created_by' => $userId ?: $vendedor,
+                'due_date' => $dataRecontato
+            ];
+            $newTaskId = Task::create($taskData);
+            if ($newTaskId) {
+                $recontatoTaskId = $newTaskId;
+            }
+        }
+
+        $stmt = $db->prepare("
+            UPDATE agenda_comercial_semanal SET
+                status_resultado = 'Perdido',
+                motivo_perda = :motivo_perda,
+                motivo_perda_obs = :motivo_perda_obs,
+                data_recontato = :data_recontato,
+                recontato_task_id = :recontato_task_id,
+                data_atualizacao = CURRENT_TIMESTAMP
+            WHERE id = :id
+        ");
+        $success = $stmt->execute([
+            'motivo_perda' => $motivoPerda,
+            'motivo_perda_obs' => $motivoPerdaObs,
+            'data_recontato' => $dataRecontato,
+            'recontato_task_id' => $recontatoTaskId,
+            'id' => $id
+        ]);
+
+        // Se a atividade estava vinculada a um lead, atualiza o lead para Perdido no funil
+        if (!empty($ativ['lead_id'])) {
+            require_once __DIR__ . '/ProspeccaoLead.php';
+            ProspeccaoLead::updateEtapa((int)$ativ['lead_id'], 'Perdido', $motivoPerda, $motivoPerdaObs, $dataRecontato, $userId);
+        }
+
+        return $success;
     }
 
     public static function reagendar($id, $novaData, $novoHorario, $motivo = null) {

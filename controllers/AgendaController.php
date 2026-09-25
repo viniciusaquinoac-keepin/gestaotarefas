@@ -142,6 +142,24 @@ class AgendaController {
         }
     }
 
+    public function registrar_perda() {
+        requireAuth();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = (int)$_POST['atividade_id'];
+            $motivoPerda = $_POST['motivo_perda'];
+            $motivoPerdaObs = $_POST['motivo_perda_obs'] ?? null;
+            $dataRecontato = !empty($_POST['data_recontato_futuro']) ? $_POST['data_recontato_futuro'] : null;
+            $userId = $_SESSION['user_id'];
+
+            AgendaSemanal::registrarPerda($id, $motivoPerda, $motivoPerdaObs, $dataRecontato, $userId);
+
+            $redirectDate = $_POST['data_ref'] ?? date('Y-m-d');
+            $empresaParam = !empty($_POST['empresa']) ? '&empresa=' . urlencode($_POST['empresa']) : '';
+            header('Location: ' . BASE_URL . '/?page=agenda&data_ref=' . urlencode($redirectDate) . $empresaParam);
+            exit;
+        }
+    }
+
     public function ciclo_vida() {
         requireAuth();
         $id = (int)($_GET['id'] ?? 0);

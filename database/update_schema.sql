@@ -95,8 +95,12 @@ CREATE TABLE IF NOT EXISTS agenda_comercial_semanal (
     tipo_atividade VARCHAR(50) NOT NULL, -- 'Ligacao', 'Abordagem', 'Diagnostico', 'Apresentacao', 'Proposta', 'Fechamento', 'Outro'
     data_agendada DATE NOT NULL,
     horario_agendado VARCHAR(10) NOT NULL,
-    status_resultado VARCHAR(30) DEFAULT 'Planejado', -- 'Planejado', 'Realizado', 'Reagendado', 'Cancelado'
+    status_resultado VARCHAR(30) DEFAULT 'Planejado', -- 'Planejado', 'Realizado', 'Reagendado', 'Perdido', 'Cancelado'
     resultado_obs TEXT,
+    motivo_perda VARCHAR(50), -- 'Preco/CAPEX', 'Concorrente', 'Decisor Nao Acessado', 'Sem Orcamento', 'Outro'
+    motivo_perda_obs TEXT,
+    data_recontato DATE,
+    recontato_task_id INTEGER,
     valor_estimado REAL DEFAULT 0,
     empresa_alvo VARCHAR(50) DEFAULT 'Autoitec', -- 'Autoitec' ou 'Keepin'
     data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,

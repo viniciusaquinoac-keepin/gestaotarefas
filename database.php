@@ -327,6 +327,18 @@ class Database {
                     if (!in_array('passo_sequencia', $colunasExistentes)) {
                         self::$pdo->exec("ALTER TABLE agenda_comercial_semanal ADD COLUMN passo_sequencia INTEGER DEFAULT 1");
                     }
+                    if (!in_array('motivo_perda', $colunasExistentes)) {
+                        self::$pdo->exec("ALTER TABLE agenda_comercial_semanal ADD COLUMN motivo_perda VARCHAR(50)");
+                    }
+                    if (!in_array('motivo_perda_obs', $colunasExistentes)) {
+                        self::$pdo->exec("ALTER TABLE agenda_comercial_semanal ADD COLUMN motivo_perda_obs TEXT");
+                    }
+                    if (!in_array('data_recontato', $colunasExistentes)) {
+                        self::$pdo->exec("ALTER TABLE agenda_comercial_semanal ADD COLUMN data_recontato DATE");
+                    }
+                    if (!in_array('recontato_task_id', $colunasExistentes)) {
+                        self::$pdo->exec("ALTER TABLE agenda_comercial_semanal ADD COLUMN recontato_task_id INTEGER");
+                    }
                 }
             } catch (PDOException $e) {
                 die("Erro de conexão com o banco de dados: " . $e->getMessage());

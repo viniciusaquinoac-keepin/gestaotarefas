@@ -171,7 +171,17 @@ $empresaNome = $empresa === 'Autoitec'
 
                         $isRealizado = ($ativ['status_resultado'] === 'Realizado');
                         $isReagendado = ($ativ['status_resultado'] === 'Reagendado');
-                        $cardBorder = $isRealizado ? 'border-success bg-success bg-opacity-10' : ($isReagendado ? 'border-warning bg-warning bg-opacity-10' : 'border-secondary bg-secondary bg-opacity-10');
+                        $isPerdido = ($ativ['status_resultado'] === 'Perdido');
+
+                        if ($isPerdido) {
+                            $cardBorder = 'border-danger bg-danger bg-opacity-10';
+                        } elseif ($isRealizado) {
+                            $cardBorder = 'border-success bg-success bg-opacity-10';
+                        } elseif ($isReagendado) {
+                            $cardBorder = 'border-warning bg-warning bg-opacity-10';
+                        } else {
+                            $cardBorder = 'border-secondary bg-secondary bg-opacity-10';
+                        }
                     ?>
                     <div class="card bg-dark <?= $cardBorder ?> mb-2 shadow-sm" style="font-size: 0.82rem;">
                         <div class="card-body p-2">
@@ -223,8 +233,18 @@ $empresaNome = $empresa === 'Autoitec'
                                 </div>
                             <?php endif; ?>
 
-                            <!-- Observações de resultado -->
-                            <?php if (!empty($ativ['resultado_obs'])): ?>
+                            <!-- Informações de Perda se houver -->
+                            <?php if ($isPerdido): ?>
+                                <div class="small text-danger bg-dark p-2 rounded border border-danger mb-1" style="font-size: 0.72rem;">
+                                    <div><strong><i class="bi bi-x-octagon me-1"></i> Motivo:</strong> <?= htmlspecialchars($ativ['motivo_perda'] ?: 'Não informado') ?></div>
+                                    <?php if (!empty($ativ['motivo_perda_obs'])): ?>
+                                        <div class="text-secondary mt-1"><?= htmlspecialchars($ativ['motivo_perda_obs']) ?></div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($ativ['data_recontato'])): ?>
+                                        <div class="text-warning mt-1"><i class="bi bi-calendar2-event me-1"></i> Recontato: <?= date('d/m/Y', strtotime($ativ['data_recontato'])) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php elseif (!empty($ativ['resultado_obs'])): ?>
                                 <div class="small text-secondary bg-dark p-1 rounded border border-secondary mb-1" style="font-size: 0.72rem;">
                                     <?= htmlspecialchars($ativ['resultado_obs']) ?>
                                 </div>
@@ -244,6 +264,8 @@ $empresaNome = $empresa === 'Autoitec'
                                 <div>
                                     <?php if ($isRealizado): ?>
                                         <span class="badge bg-success small"><i class="bi bi-check2-circle"></i> Realizado</span>
+                                    <?php elseif ($isPerdido): ?>
+                                        <span class="badge bg-danger small"><i class="bi bi-x-circle-fill"></i> Perdido</span>
                                     <?php elseif ($isReagendado): ?>
                                         <span class="badge bg-warning text-dark small"><i class="bi bi-arrow-repeat"></i> Reagendado</span>
                                     <?php else: ?>
@@ -252,16 +274,22 @@ $empresaNome = $empresa === 'Autoitec'
                                 </div>
 
                                 <div class="d-flex gap-1 align-items-center">
-                                    <?php if (!$isRealizado): ?>
+                                    <?php if (!$isRealizado && !$isPerdido): ?>
                                         <button class="btn btn-sm btn-outline-success p-0 px-1" title="Marcar como Realizado" onclick="concluirAtividade(<?= $ativ['id'] ?>)">
                                             <i class="bi bi-check-lg"></i>
                                         </button>
                                         <button class="btn btn-sm btn-outline-warning p-0 px-1" title="Reagendar" onclick="abrirModalReagendar(<?= htmlspecialchars(json_encode($ativ)) ?>)">
                                             <i class="bi bi-clock-history"></i>
                                         </button>
-                                    <?php else: ?>
+                                        <button class="btn btn-sm btn-outline-danger p-0 px-1" title="Registrar Perda / Não Fechou" onclick="abrirModalRegistrarPerda(<?= htmlspecialchars(json_encode($ativ)) ?>)">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    <?php elseif ($isRealizado): ?>
                                         <button class="btn btn-sm btn-outline-info p-0 px-1" title="Dar Sequência / Nova Atividade" onclick="gerarSequenciaAtividade(<?= htmlspecialchars(json_encode($ativ)) ?>)">
                                             <i class="bi bi-arrow-right-circle-fill"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger p-0 px-1" title="Registrar Perda" onclick="abrirModalRegistrarPerda(<?= htmlspecialchars(json_encode($ativ)) ?>)">
+                                            <i class="bi bi-x-circle"></i>
                                         </button>
                                     <?php endif; ?>
                                     <form method="POST" action="<?= BASE_URL ?>/?page=agenda&action=delete" class="d-inline" onsubmit="return confirm('Deseja excluir este agendamento?');">
@@ -279,6 +307,11 @@ $empresaNome = $empresa === 'Autoitec'
                                         onclick="gerarSequenciaAtividade(<?= htmlspecialchars(json_encode($ativ)) ?>)"
                                         title="Dar sequência agendando a próxima atividade deste lead">
                                     <i class="bi bi-arrow-right-circle-fill"></i> Dar Sequência / Nova Atividade
+                                </button>
+                            <?php elseif ($isPerdido): ?>
+                                <button type="button" class="btn btn-sm btn-outline-warning w-100 mt-2 py-1 small fw-bold shadow-sm d-flex align-items-center justify-content-center gap-1"
+                                        onclick="abrirModalReagendar(<?= htmlspecialchars(json_encode($ativ)) ?>)">
+                                    <i class="bi bi-arrow-repeat"></i> Tentar Recontato Agora
                                 </button>
                             <?php endif; ?>
                         </div>
@@ -319,12 +352,13 @@ $empresaNome = $empresa === 'Autoitec'
             <table class="table table-dark table-bordered mb-0 text-center align-middle" style="border-color: #495057;">
                 <thead>
                     <tr class="bg-secondary bg-opacity-25 text-secondary" style="font-size: 0.78rem; letter-spacing: 0.5px;">
-                        <th style="width: 14%;">LIGAÇÕES<br><span class="text-info fw-normal">(LIG)</span></th>
-                        <th style="width: 14%;">ABORDAGENS<br><span class="text-primary fw-normal">(OI / CAMPO)</span></th>
-                        <th style="width: 14%;">DIAGNÓSTICOS<br><span class="text-secondary fw-normal">(FF / SPIN)</span></th>
-                        <th style="width: 14%;">APRESENTAÇÕES<br><span class="text-warning fw-normal">(P / REUNIÕES)</span></th>
-                        <th style="width: 14%;">PROPOSTAS<br><span class="text-purple fw-normal" style="color:#b197fc;">(N / ENVIADAS)</span></th>
-                        <th style="width: 14%;">FECHAMENTOS<br><span class="text-success fw-normal">(C / GANHOS 🎉)</span></th>
+                        <th style="width: 12%;">LIGAÇÕES<br><span class="text-info fw-normal">(LIG)</span></th>
+                        <th style="width: 12%;">ABORDAGENS<br><span class="text-primary fw-normal">(OI / CAMPO)</span></th>
+                        <th style="width: 12%;">DIAGNÓSTICOS<br><span class="text-secondary fw-normal">(FF / SPIN)</span></th>
+                        <th style="width: 12%;">APRESENTAÇÕES<br><span class="text-warning fw-normal">(P / REUNIÕES)</span></th>
+                        <th style="width: 12%;">PROPOSTAS<br><span class="text-purple fw-normal" style="color:#b197fc;">(N / ENVIADAS)</span></th>
+                        <th style="width: 12%;">FECHAMENTOS<br><span class="text-success fw-normal">(C / GANHOS 🎉)</span></th>
+                        <th style="width: 12%;">PERDAS<br><span class="text-danger fw-normal">(RECUSAS ❌)</span></th>
                         <th style="width: 16%;">CONVERSÃO & TOTAL<br><span class="text-warning fw-normal">(AP R$ / AC R$)</span></th>
                     </tr>
                 </thead>
@@ -360,6 +394,16 @@ $empresaNome = $empresa === 'Autoitec'
                         <td class="bg-success bg-opacity-10">
                             <div class="fs-2 fw-bold text-success"><?= $resumo['fechamentos']['realizadas'] ?></div>
                             <small class="text-success" style="font-size: 0.72rem;">Planejados: <?= $resumo['fechamentos']['planejadas'] ?></small>
+                        </td>
+                        <!-- Perdas / Recusas -->
+                        <td class="bg-danger bg-opacity-10">
+                            <div class="fs-2 fw-bold text-danger"><?= $resumo['perdas']['total'] ?></div>
+                            <small class="text-danger d-block" style="font-size: 0.72rem;">R$ <?= number_format($resumo['perdas']['valor'], 2, ',', '.') ?></small>
+                            <?php if (!empty($resumo['perdas']['motivos'])): ?>
+                                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger p-1 mt-1" style="font-size: 0.65rem;" title="Principais motivos de perda">
+                                    <?= htmlspecialchars($resumo['perdas']['motivos'][0]['motivo_perda'] ?? '') ?> (<?= $resumo['perdas']['motivos'][0]['qtd'] ?? 0 ?>x)
+                                </span>
+                            <?php endif; ?>
                         </td>
                         <!-- Conversão e Volume Financeiro -->
                         <td class="text-start ps-3 bg-secondary bg-opacity-10">
@@ -622,6 +666,72 @@ $empresaNome = $empresa === 'Autoitec'
     </div>
 </div>
 
+<!-- ========================================================================= -->
+<!-- MODAL REGISTRAR PERDA / RECUSA COMERCIAL -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="modalRegistrarPerdaAgenda" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light border-danger">
+            <form action="<?= BASE_URL ?>/?page=agenda&action=registrar_perda" method="POST">
+                <input type="hidden" name="atividade_id" id="perda_atividade_id">
+                <input type="hidden" name="data_ref" value="<?= htmlspecialchars($boundaries['monday']) ?>">
+                <input type="hidden" name="empresa" value="<?= htmlspecialchars($empresa ?? '') ?>">
+                
+                <div class="modal-header border-danger bg-danger bg-opacity-25">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-x-octagon-fill me-1"></i> Registrar Perda / Recusa Comercial
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger bg-danger bg-opacity-10 border-danger small mb-3">
+                        <i class="bi bi-info-circle-fill me-1"></i>
+                        Esta ação marca a atividade como <strong>Perdida</strong>, atualiza o lead no funil de prospecção e permite agendar um recontato futuro com criação de tarefa automática no Kanban.
+                    </div>
+
+                    <div class="p-2 rounded bg-secondary bg-opacity-10 border border-secondary mb-3 small">
+                        <div>Cliente: <strong class="text-light fs-6" id="perda_cliente_nome"></strong></div>
+                        <div class="text-secondary">Atividade: <span id="perda_tipo_atividade" class="badge bg-secondary"></span></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-danger">Motivo da Perda (Obrigatório) *</label>
+                        <select name="motivo_perda" id="perda_motivo_perda" class="form-select bg-dark text-light border-secondary" required>
+                            <option value="">Selecione o motivo da perda...</option>
+                            <option value="Preco/CAPEX">Preço / CAPEX Elevado (Sem Verba)</option>
+                            <option value="Concorrente">Optou por Concorrente</option>
+                            <option value="Decisor Nao Acessado">Decisor Não Acessado / Bloqueado</option>
+                            <option value="Sem Orcamento">Sem Orçamento / Projeto Congelado</option>
+                            <option value="Sem Interesse / Desistiu">Sem Interesse no momento / Desistiu</option>
+                            <option value="Prazo / Urgencia">Prazo ou Urgência Incompatível</option>
+                            <option value="Outro">Outro Motivo</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-warning">Data para Recontato Futuro (Opcional)</label>
+                        <input type="date" name="data_recontato_futuro" id="perda_data_recontato" class="form-control bg-dark text-light border-secondary" min="<?= date('Y-m-d') ?>">
+                        <div class="form-text text-secondary small">
+                            Se preenchida, criará uma tarefa de recontato comercial atribuída ao vendedor no Kanban.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small">Observações e Lições Aprendidas</label>
+                        <textarea name="motivo_perda_obs" id="perda_motivo_obs" class="form-control bg-dark text-light border-secondary" rows="3" placeholder="O que faltou para o fechamento? O que podemos melhorar em abordagens futuras?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger fw-bold">
+                        <i class="bi bi-x-circle me-1"></i> Confirmar Perda
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 function agendarNoDia(dataStr) {
     document.getElementById('modal_data_agendada').value = dataStr;
@@ -693,6 +803,17 @@ function abrirModalReagendar(ativ) {
     document.getElementById('reag_nova_data').value = ativ.data_agendada;
     document.getElementById('reag_novo_horario').value = ativ.horario_agendado || '09:00';
     const modal = new bootstrap.Modal(document.getElementById('modalReagendar'));
+    modal.show();
+}
+
+function abrirModalRegistrarPerda(ativ) {
+    document.getElementById('perda_atividade_id').value = ativ.id;
+    document.getElementById('perda_cliente_nome').textContent = ativ.cliente_nome || 'Cliente';
+    document.getElementById('perda_tipo_atividade').textContent = ativ.tipo_atividade || '';
+    document.getElementById('perda_motivo_perda').value = ativ.motivo_perda || '';
+    document.getElementById('perda_motivo_obs').value = ativ.motivo_perda_obs || '';
+    document.getElementById('perda_data_recontato').value = ativ.data_recontato || '';
+    const modal = new bootstrap.Modal(document.getElementById('modalRegistrarPerdaAgenda'));
     modal.show();
 }
 
@@ -868,8 +989,27 @@ function abrirModalJornada(ativId) {
                 else if (t.includes('prop')) { badgeClass = 'bg-purple text-white'; iconClass = 'bi-file-earmark-text-fill'; }
                 else if (t.includes('fech')) { badgeClass = 'bg-success'; iconClass = 'bi-trophy-fill'; }
 
+                const isPerdido = (item.status_resultado === 'Perdido');
                 const isRealizado = (item.status_resultado === 'Realizado');
-                const statusBadge = isRealizado ? '<span class="badge bg-success small"><i class="bi bi-check2"></i> Realizado</span>' : '<span class="badge bg-secondary small">Planejado</span>';
+                let statusBadge = '<span class="badge bg-secondary small">Planejado</span>';
+                if (isPerdido) {
+                    statusBadge = '<span class="badge bg-danger small"><i class="bi bi-x-circle-fill"></i> Perdido</span>';
+                    badgeClass = 'bg-danger text-white';
+                    iconClass = 'bi-x-circle-fill';
+                } else if (isRealizado) {
+                    statusBadge = '<span class="badge bg-success small"><i class="bi bi-check2"></i> Realizado</span>';
+                }
+
+                let perdaInfoHtml = '';
+                if (isPerdido && item.motivo_perda) {
+                    perdaInfoHtml = `
+                        <div class="p-2 bg-danger bg-opacity-10 rounded border border-danger small text-danger mt-1">
+                            <div><strong><i class="bi bi-x-octagon me-1"></i> Motivo da Perda:</strong> ${item.motivo_perda}</div>
+                            ${item.motivo_perda_obs ? `<div class="text-secondary mt-1">${item.motivo_perda_obs}</div>` : ''}
+                            ${item.data_recontato ? `<div class="text-warning mt-1"><i class="bi bi-calendar2-event me-1"></i> Recontato agendado para: <strong>${item.data_recontato}</strong></div>` : ''}
+                        </div>
+                    `;
+                }
 
                 html += `
                     <div class="position-relative mb-4">
@@ -878,7 +1018,7 @@ function abrirModalJornada(ativId) {
                                 <i class="bi ${iconClass}"></i>
                             </span>
                         </div>
-                        <div class="card bg-dark border-secondary p-3 shadow-sm ms-2">
+                        <div class="card bg-dark ${isPerdido ? 'border-danger bg-danger bg-opacity-10' : 'border-secondary'} p-3 shadow-sm ms-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <div>
                                     <span class="badge ${badgeClass} me-2">${item.tipo_atividade}</span>
@@ -896,6 +1036,7 @@ function abrirModalJornada(ativId) {
                                 ${item.valor_estimado > 0 ? ` • <span class="text-success fw-bold">R$ ${parseFloat(item.valor_estimado).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>` : ''}
                             </div>
                             ${item.resultado_obs ? `<div class="p-2 bg-secondary bg-opacity-10 rounded border border-secondary small text-light mt-1">${item.resultado_obs}</div>` : ''}
+                            ${perdaInfoHtml}
                             <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-secondary small text-secondary" style="font-size: 0.72rem;">
                                 <span>${idx === 0 ? '🏁 Início do ciclo de vida' : `⏱️ +${item.dias_desde_anterior} dia(s) após a etapa anterior`}</span>
                                 <span>Total acumulado: <strong>${item.dias_desde_inicio} dia(s)</strong></span>
