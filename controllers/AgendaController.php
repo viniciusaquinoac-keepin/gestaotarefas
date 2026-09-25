@@ -43,26 +43,46 @@ class AgendaController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userId = $_SESSION['user_id'];
             $vendedor = !empty($_POST['vendedor_id']) ? (int)$_POST['vendedor_id'] : $userId;
+            $leadId = !empty($_POST['lead_id']) ? (int)$_POST['lead_id'] : null;
+            $tipoAtividade = $_POST['tipo_atividade'];
+            $empresaAlvo = $_POST['empresa_alvo'] ?? 'Autoitec';
 
             $data = [
                 'vendedor_id' => $vendedor,
-                'lead_id' => !empty($_POST['lead_id']) ? (int)$_POST['lead_id'] : null,
+                'lead_id' => $leadId,
                 'cliente_nome' => trim($_POST['cliente_nome']),
                 'contato_nome' => trim($_POST['contato_nome'] ?? ''),
                 'contato_telefone' => trim($_POST['contato_telefone'] ?? ''),
-                'tipo_atividade' => $_POST['tipo_atividade'],
+                'tipo_atividade' => $tipoAtividade,
                 'data_agendada' => $_POST['data_agendada'],
                 'horario_agendado' => $_POST['horario_agendado'] ?: '09:00',
                 'status_resultado' => $_POST['status_resultado'] ?? 'Planejado',
                 'resultado_obs' => trim($_POST['resultado_obs'] ?? ''),
                 'valor_estimado' => (float)str_replace(['.', ','], ['', '.'], $_POST['valor_estimado'] ?? '0'),
-                'empresa_alvo' => $_POST['empresa_alvo'] ?? 'Autoitec'
+                'empresa_alvo' => $empresaAlvo
             ];
 
             AgendaSemanal::create($data);
 
+            // Se solicitado, sincroniza a etapa do lead no funil de prospecção
+            if ($leadId && !empty($_POST['atualizar_etapa_lead'])) {
+                $mapaEtapas = [
+                    'Ligacao' => 'Prospeccao',
+                    'Abordagem' => 'Abordagem',
+                    'Diagnostico' => 'Diagnostico',
+                    'Apresentacao' => 'Apresentacao',
+                    'Proposta' => 'Proposta',
+                    'Fechamento' => 'Fechado'
+                ];
+                if (isset($mapaEtapas[$tipoAtividade])) {
+                    ProspeccaoLead::updateEtapa($leadId, $mapaEtapas[$tipoAtividade], null, null, null, $vendedor);
+                }
+            }
+
             $redirectDate = !empty($_POST['data_agendada']) ? $_POST['data_agendada'] : date('Y-m-d');
-            header('Location: ' . BASE_URL . '/?page=agenda&data_ref=' . urlencode($redirectDate));
+            $empresaFiltro = !empty($_POST['empresa_filtro']) ? $_POST['empresa_filtro'] : (!empty($_GET['empresa']) ? $_GET['empresa'] : '');
+            $empresaParam = !empty($empresaFiltro) ? '&empresa=' . urlencode($empresaFiltro) : '';
+            header('Location: ' . BASE_URL . '/?page=agenda&data_ref=' . urlencode($redirectDate) . $empresaParam);
             exit;
         }
     }
@@ -83,7 +103,8 @@ class AgendaController {
             }
 
             $redirectDate = $_POST['data_ref'] ?? date('Y-m-d');
-            header('Location: ' . BASE_URL . '/?page=agenda&data_ref=' . urlencode($redirectDate));
+            $empresaParam = !empty($_POST['empresa']) ? '&empresa=' . urlencode($_POST['empresa']) : '';
+            header('Location: ' . BASE_URL . '/?page=agenda&data_ref=' . urlencode($redirectDate) . $empresaParam);
             exit;
         }
     }
@@ -98,7 +119,8 @@ class AgendaController {
 
             AgendaSemanal::reagendar($id, $novaData, $novoHorario, $motivo);
 
-            header('Location: ' . BASE_URL . '/?page=agenda&data_ref=' . urlencode($novaData));
+            $empresaParam = !empty($_POST['empresa']) ? '&empresa=' . urlencode($_POST['empresa']) : '';
+            header('Location: ' . BASE_URL . '/?page=agenda&data_ref=' . urlencode($novaData) . $empresaParam);
             exit;
         }
     }
@@ -110,7 +132,8 @@ class AgendaController {
             $redirectDate = $_POST['data_ref'] ?? date('Y-m-d');
             AgendaSemanal::delete($id);
 
-            header('Location: ' . BASE_URL . '/?page=agenda&data_ref=' . urlencode($redirectDate));
+            $empresaParam = !empty($_POST['empresa']) ? '&empresa=' . urlencode($_POST['empresa']) : '';
+            header('Location: ' . BASE_URL . '/?page=agenda&data_ref=' . urlencode($redirectDate) . $empresaParam);
             exit;
         }
     }

@@ -2,26 +2,50 @@
 $weekNum = $boundaries['week_number'];
 $mondayFmt = date('d/m', strtotime($boundaries['monday']));
 $sundayFmt = date('d/m/Y', strtotime($boundaries['sunday']));
+
+$empresaCor = $empresa === 'Autoitec' ? 'primary' : ($empresa === 'Keepin' ? 'success' : 'info');
+$empresaNome = $empresa === 'Autoitec' 
+    ? 'Autoitec Engenharia Industrial (B2B)' 
+    : ($empresa === 'Keepin' ? 'Keepin Automação & IoT (Field Sales)' : 'Visão Geral (Todas as Empresas)');
 ?>
 
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div>
         <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-info text-dark fs-6"><i class="bi bi-calendar-week"></i> Gestão Comercial Semanal</span>
+            <span class="badge bg-<?= $empresaCor ?> <?= $empresaCor === 'info' ? 'text-dark' : '' ?> fs-6">
+                <i class="bi bi-calendar-week"></i> Gestão Comercial Semanal
+            </span>
             <span class="badge bg-warning text-dark fw-bold">SEMANA # <?= $weekNum ?></span>
             <span class="badge bg-secondary"><?= $mondayFmt ?> a <?= $sundayFmt ?></span>
         </div>
-        <h1 class="h3 text-light mb-0">Agenda de Atividades Semanal</h1>
+        <h1 class="h3 text-light mb-0"><?= $empresaNome ?></h1>
     </div>
 
-    <!-- Navegação de Semanas e Ações -->
+    <!-- Seletor de Empresa e Ações -->
     <div class="d-flex flex-wrap align-items-center gap-2">
-        <div class="btn-group" role="group">
+        <!-- Seletor de Empresa Semelhante à Tela de Prospecção -->
+        <div class="btn-group shadow-sm" role="group">
+            <a href="<?= BASE_URL ?>/?page=agenda&empresa=Autoitec&data_ref=<?= urlencode($boundaries['monday']) ?>&vendedor_id=<?= urlencode($vendedorId ?? '') ?>" 
+               class="btn btn-sm <?= $empresa === 'Autoitec' ? 'btn-primary active fw-bold' : 'btn-outline-primary' ?>">
+                <i class="bi bi-gear-wide-connected me-1"></i> Autoitec (B2B)
+            </a>
+            <a href="<?= BASE_URL ?>/?page=agenda&empresa=Keepin&data_ref=<?= urlencode($boundaries['monday']) ?>&vendedor_id=<?= urlencode($vendedorId ?? '') ?>" 
+               class="btn btn-sm <?= $empresa === 'Keepin' ? 'btn-success active fw-bold' : 'btn-outline-success' ?>">
+                <i class="bi bi-shop me-1"></i> Keepin (IoT)
+            </a>
+            <a href="<?= BASE_URL ?>/?page=agenda&data_ref=<?= urlencode($boundaries['monday']) ?>&vendedor_id=<?= urlencode($vendedorId ?? '') ?>" 
+               class="btn btn-sm <?= empty($empresa) ? 'btn-light text-dark active fw-bold' : 'btn-outline-secondary' ?>">
+                <i class="bi bi-grid-fill me-1"></i> Todas
+            </a>
+        </div>
+
+        <!-- Navegação de Semanas -->
+        <div class="btn-group shadow-sm" role="group">
             <a href="<?= BASE_URL ?>/?page=agenda&data_ref=<?= urlencode($boundaries['prev_week']) ?>&vendedor_id=<?= urlencode($vendedorId ?? '') ?>&empresa=<?= urlencode($empresa ?? '') ?>" class="btn btn-sm btn-outline-secondary" title="Semana Anterior">
                 <i class="bi bi-chevron-left"></i> Anterior
             </a>
             <a href="<?= BASE_URL ?>/?page=agenda&data_ref=<?= date('Y-m-d') ?>&vendedor_id=<?= urlencode($vendedorId ?? '') ?>&empresa=<?= urlencode($empresa ?? '') ?>" class="btn btn-sm btn-outline-info <?= ($boundaries['current_date'] === date('Y-m-d')) ? 'active' : '' ?>">
-                Hoje (Semana Atual)
+                Hoje
             </a>
             <a href="<?= BASE_URL ?>/?page=agenda&data_ref=<?= urlencode($boundaries['next_week']) ?>&vendedor_id=<?= urlencode($vendedorId ?? '') ?>&empresa=<?= urlencode($empresa ?? '') ?>" class="btn btn-sm btn-outline-secondary" title="Próxima Semana">
                 Próxima <i class="bi bi-chevron-right"></i>
@@ -33,7 +57,7 @@ $sundayFmt = date('d/m/Y', strtotime($boundaries['sunday']));
         </button>
 
         <button class="btn btn-sm btn-outline-light" onclick="window.print()" title="Imprimir Grade">
-            <i class="bi bi-printer"></i> Imprimir
+            <i class="bi bi-printer"></i>
         </button>
     </div>
 </div>
@@ -206,7 +230,7 @@ $sundayFmt = date('d/m/Y', strtotime($boundaries['sunday']));
                                     <?php endif; ?>
                                 </div>
 
-                                <div class="d-flex gap-1">
+                                <div class="d-flex gap-1 align-items-center">
                                     <?php if (!$isRealizado): ?>
                                         <button class="btn btn-sm btn-outline-success p-0 px-1" title="Marcar como Realizado" onclick="concluirAtividade(<?= $ativ['id'] ?>)">
                                             <i class="bi bi-check-lg"></i>
@@ -214,14 +238,28 @@ $sundayFmt = date('d/m/Y', strtotime($boundaries['sunday']));
                                         <button class="btn btn-sm btn-outline-warning p-0 px-1" title="Reagendar" onclick="abrirModalReagendar(<?= htmlspecialchars(json_encode($ativ)) ?>)">
                                             <i class="bi bi-clock-history"></i>
                                         </button>
+                                    <?php else: ?>
+                                        <button class="btn btn-sm btn-outline-info p-0 px-1" title="Dar Sequência / Nova Atividade" onclick="gerarSequenciaAtividade(<?= htmlspecialchars(json_encode($ativ)) ?>)">
+                                            <i class="bi bi-arrow-right-circle-fill"></i>
+                                        </button>
                                     <?php endif; ?>
                                     <form method="POST" action="<?= BASE_URL ?>/?page=agenda&action=delete" class="d-inline" onsubmit="return confirm('Deseja excluir este agendamento?');">
                                         <input type="hidden" name="atividade_id" value="<?= $ativ['id'] ?>">
                                         <input type="hidden" name="data_ref" value="<?= htmlspecialchars($boundaries['monday']) ?>">
+                                        <input type="hidden" name="empresa" value="<?= htmlspecialchars($empresa ?? '') ?>">
                                         <button type="submit" class="btn btn-sm btn-link text-danger p-0 px-1" title="Excluir"><i class="bi bi-trash"></i></button>
                                     </form>
                                 </div>
                             </div>
+
+                            <?php if ($isRealizado): ?>
+                                <!-- Botão de Sequência Rápida para o Comercial -->
+                                <button type="button" class="btn btn-sm btn-outline-info w-100 mt-2 py-1 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-1" 
+                                        onclick="gerarSequenciaAtividade(<?= htmlspecialchars(json_encode($ativ)) ?>)"
+                                        title="Dar sequência agendando a próxima atividade deste lead">
+                                    <i class="bi bi-arrow-right-circle-fill"></i> Dar Sequência / Nova Atividade
+                                </button>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -348,16 +386,17 @@ $sundayFmt = date('d/m/Y', strtotime($boundaries['sunday']));
     <div class="modal-dialog">
         <div class="modal-content bg-dark text-light border-primary">
             <form action="<?= BASE_URL ?>/?page=agenda&action=create" method="POST">
+                <input type="hidden" name="empresa_filtro" value="<?= htmlspecialchars($empresa ?? '') ?>">
                 <div class="modal-header border-primary bg-primary bg-opacity-25">
-                    <h5 class="modal-title text-light"><i class="bi bi-calendar-plus me-1"></i> Agendar Atividade Comercial</h5>
+                    <h5 class="modal-title text-light" id="modalNovoAgendamentoTitulo"><i class="bi bi-calendar-plus me-1"></i> Agendar Atividade Comercial</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label small fw-bold">Empresa</label>
-                        <select name="empresa_alvo" class="form-select bg-dark text-light border-secondary" required>
-                            <option value="Autoitec">Autoitec (Industrial B2B)</option>
-                            <option value="Keepin">Keepin (IoT Varejo)</option>
+                        <label class="form-label small fw-bold">Empresa Alvo</label>
+                        <select name="empresa_alvo" id="modal_empresa_alvo" class="form-select bg-dark text-light border-secondary" required>
+                            <option value="Autoitec" <?= ($empresa === 'Autoitec') ? 'selected' : '' ?>>Autoitec (Industrial B2B)</option>
+                            <option value="Keepin" <?= ($empresa === 'Keepin') ? 'selected' : '' ?>>Keepin (IoT Varejo)</option>
                         </select>
                     </div>
 
@@ -375,7 +414,7 @@ $sundayFmt = date('d/m/Y', strtotime($boundaries['sunday']));
                         </div>
                         <div class="col-md-5">
                             <label class="form-label small">Valor Estimado (R$)</label>
-                            <input type="text" name="valor_estimado" class="form-control bg-dark text-light border-secondary" placeholder="0,00">
+                            <input type="text" name="valor_estimado" id="modal_valor_estimado" class="form-control bg-dark text-light border-secondary" placeholder="0,00">
                         </div>
                     </div>
 
@@ -418,9 +457,16 @@ $sundayFmt = date('d/m/Y', strtotime($boundaries['sunday']));
                         </select>
                     </div>
 
+                    <div class="form-check form-switch mb-3 p-2 bg-dark rounded border border-secondary" id="box_atualizar_lead" style="display: none;">
+                        <input class="form-check-input ms-0 me-2" type="checkbox" name="atualizar_etapa_lead" id="modal_atualizar_etapa_lead" value="1" checked>
+                        <label class="form-check-label small text-info fw-bold" for="modal_atualizar_etapa_lead">
+                            <i class="bi bi-funnel"></i> Atualizar também a etapa do lead no funil de prospecção para acompanhar esta atividade
+                        </label>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label small">Vendedor Responsável</label>
-                        <select name="vendedor_id" class="form-select bg-dark text-light border-secondary">
+                        <select name="vendedor_id" id="modal_vendedor_id" class="form-select bg-dark text-light border-secondary">
                             <?php foreach ($users as $u): ?>
                                 <option value="<?= $u['id'] ?>" <?= ($u['id'] == $_SESSION['user_id']) ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($u['name']) ?>
@@ -431,12 +477,12 @@ $sundayFmt = date('d/m/Y', strtotime($boundaries['sunday']));
 
                     <div class="mb-3">
                         <label class="form-label small">Observações / Pauta do Compromisso</label>
-                        <textarea name="resultado_obs" class="form-control bg-dark text-light border-secondary" rows="2" placeholder="Objetivo da ligação, pontos a abordar na reunião..."></textarea>
+                        <textarea name="resultado_obs" id="modal_resultado_obs" class="form-control bg-dark text-light border-secondary" rows="2" placeholder="Objetivo da ligação, pontos a abordar na reunião..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-secondary">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary fw-bold">Confirmar Agendamento</button>
+                    <button type="submit" class="btn btn-primary fw-bold" id="btnSalvarAgendamento">Confirmar Agendamento</button>
                 </div>
             </form>
         </div>
@@ -451,6 +497,7 @@ $sundayFmt = date('d/m/Y', strtotime($boundaries['sunday']));
         <div class="modal-content bg-dark text-light border-warning">
             <form action="<?= BASE_URL ?>/?page=agenda&action=reagendar" method="POST">
                 <input type="hidden" name="atividade_id" id="reag_atividade_id">
+                <input type="hidden" name="empresa" value="<?= htmlspecialchars($empresa ?? '') ?>">
                 <div class="modal-header border-warning bg-warning bg-opacity-25">
                     <h5 class="modal-title text-warning"><i class="bi bi-clock-history me-1"></i> Reagendar Atividade</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -490,10 +537,17 @@ function agendarNoDia(dataStr) {
 
 function preencherDadosLead(selectElem) {
     const opt = selectElem.options[selectElem.selectedIndex];
+    const boxAtualizar = document.getElementById('box_atualizar_lead');
     if (opt.value) {
         document.getElementById('modal_cliente_nome').value = opt.getAttribute('data-nome') || '';
         document.getElementById('modal_contato_nome').value = opt.getAttribute('data-contato') || '';
         document.getElementById('modal_contato_telefone').value = opt.getAttribute('data-telefone') || '';
+        if (opt.getAttribute('data-empresa') && document.getElementById('modal_empresa_alvo')) {
+            document.getElementById('modal_empresa_alvo').value = opt.getAttribute('data-empresa');
+        }
+        if (boxAtualizar) boxAtualizar.style.display = 'block';
+    } else {
+        if (boxAtualizar) boxAtualizar.style.display = 'none';
     }
 }
 
@@ -529,6 +583,12 @@ function concluirAtividade(id) {
     inputDateRef.value = '<?= htmlspecialchars($boundaries['monday']) ?>';
     form.appendChild(inputDateRef);
 
+    const inputEmpresa = document.createElement('input');
+    inputEmpresa.type = 'hidden';
+    inputEmpresa.name = 'empresa';
+    inputEmpresa.value = '<?= htmlspecialchars($empresa ?? '') ?>';
+    form.appendChild(inputEmpresa);
+
     document.body.appendChild(form);
     form.submit();
 }
@@ -541,4 +601,132 @@ function abrirModalReagendar(ativ) {
     const modal = new bootstrap.Modal(document.getElementById('modalReagendar'));
     modal.show();
 }
+
+function gerarSequenciaAtividade(ativ) {
+    // 1. Ajustar título e botão do modal
+    const modalTitulo = document.getElementById('modalNovoAgendamentoTitulo');
+    if (modalTitulo) {
+        modalTitulo.innerHTML = '<i class="bi bi-arrow-repeat me-1 text-info"></i> Dar Sequência: ' + (ativ.cliente_nome || 'Lead');
+    }
+    const btnSalvar = document.getElementById('btnSalvarAgendamento');
+    if (btnSalvar) {
+        btnSalvar.textContent = 'Agendar Próxima Atividade';
+    }
+
+    // 2. Preencher empresa e dados de contato
+    if (document.getElementById('modal_empresa_alvo') && ativ.empresa_alvo) {
+        document.getElementById('modal_empresa_alvo').value = ativ.empresa_alvo;
+    }
+    if (document.getElementById('modal_cliente_nome')) {
+        document.getElementById('modal_cliente_nome').value = ativ.cliente_nome || '';
+    }
+    if (document.getElementById('modal_contato_nome')) {
+        document.getElementById('modal_contato_nome').value = ativ.contato_nome || '';
+    }
+    if (document.getElementById('modal_contato_telefone')) {
+        document.getElementById('modal_contato_telefone').value = ativ.contato_telefone || '';
+    }
+
+    // 3. Vincular Lead se houver
+    const leadSelect = document.getElementById('modal_lead_id');
+    const boxAtualizar = document.getElementById('box_atualizar_lead');
+    if (leadSelect) {
+        if (ativ.lead_id) {
+            leadSelect.value = ativ.lead_id;
+            if (boxAtualizar) boxAtualizar.style.display = 'block';
+        } else {
+            let achou = false;
+            for (let i = 0; i < leadSelect.options.length; i++) {
+                if (leadSelect.options[i].text.toLowerCase().includes((ativ.cliente_nome || '').toLowerCase().trim())) {
+                    leadSelect.selectedIndex = i;
+                    achou = true;
+                    if (boxAtualizar) boxAtualizar.style.display = 'block';
+                    break;
+                }
+            }
+            if (!achou) {
+                leadSelect.value = '';
+                if (boxAtualizar) boxAtualizar.style.display = 'none';
+            }
+        }
+    }
+
+    // 4. Determinar próxima atividade recomendada no fluxo de vendas
+    // Ex: Já ligou -> agora vai apresentar proposta (ou apresentação)
+    const tipoSelect = document.getElementById('modal_tipo_atividade');
+    let proxAtiv = 'Proposta';
+    const tipoAnt = (ativ.tipo_atividade || '').toLowerCase();
+
+    if (tipoAnt.includes('liga')) {
+        proxAtiv = 'Proposta';
+    } else if (tipoAnt.includes('abord')) {
+        proxAtiv = 'Diagnostico';
+    } else if (tipoAnt.includes('diag') || tipoAnt.includes('spin')) {
+        proxAtiv = 'Apresentacao';
+    } else if (tipoAnt.includes('apres')) {
+        proxAtiv = 'Proposta';
+    } else if (tipoAnt.includes('prop')) {
+        proxAtiv = 'Fechamento';
+    } else if (tipoAnt.includes('fech')) {
+        proxAtiv = 'Fechamento';
+    }
+    if (tipoSelect) {
+        tipoSelect.value = proxAtiv;
+    }
+
+    // 5. Data sugerida
+    const hoje = new Date().toISOString().split('T')[0];
+    const dataSug = (ativ.data_agendada && ativ.data_agendada >= hoje) ? ativ.data_agendada : hoje;
+    if (document.getElementById('modal_data_agendada')) {
+        document.getElementById('modal_data_agendada').value = dataSug;
+    }
+    if (document.getElementById('modal_horario_agendado')) {
+        document.getElementById('modal_horario_agendado').value = '14:00';
+    }
+
+    // 6. Valor estimado se houver
+    if (ativ.valor_estimado && ativ.valor_estimado > 0) {
+        const valElem = document.getElementById('modal_valor_estimado');
+        if (valElem) valElem.value = ativ.valor_estimado;
+    }
+
+    // 7. Vendedor
+    if (ativ.vendedor_id && document.getElementById('modal_vendedor_id')) {
+        document.getElementById('modal_vendedor_id').value = ativ.vendedor_id;
+    }
+
+    // 8. Observações de sequência
+    const txtObs = document.getElementById('modal_resultado_obs');
+    if (txtObs) {
+        let obsTxt = 'Sequência após ' + ativ.tipo_atividade + ' realizada.';
+        if (ativ.resultado_obs) {
+            obsTxt += ' (Anterior: ' + ativ.resultado_obs + ')';
+        }
+        txtObs.value = obsTxt;
+    }
+
+    // 9. Abrir Modal
+    const modal = new bootstrap.Modal(document.getElementById('modalNovoAgendamento'));
+    modal.show();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const modalElem = document.getElementById('modalNovoAgendamento');
+    if (modalElem) {
+        modalElem.addEventListener('hidden.bs.modal', function () {
+            const modalTitulo = document.getElementById('modalNovoAgendamentoTitulo');
+            if (modalTitulo) {
+                modalTitulo.innerHTML = '<i class="bi bi-calendar-plus me-1"></i> Agendar Atividade Comercial';
+            }
+            const btnSalvar = document.getElementById('btnSalvarAgendamento');
+            if (btnSalvar) {
+                btnSalvar.textContent = 'Confirmar Agendamento';
+            }
+            const boxAtualizar = document.getElementById('box_atualizar_lead');
+            if (boxAtualizar) {
+                boxAtualizar.style.display = 'none';
+            }
+        });
+    }
+});
 </script>
