@@ -50,6 +50,10 @@ class AgendaController {
             $data = [
                 'vendedor_id' => $vendedor,
                 'lead_id' => $leadId,
+                'atividade_anterior_id' => !empty($_POST['atividade_anterior_id']) ? (int)$_POST['atividade_anterior_id'] : null,
+                'ciclo_origem_id' => !empty($_POST['ciclo_origem_id']) ? (int)$_POST['ciclo_origem_id'] : null,
+                'data_primeiro_contato' => !empty($_POST['data_primeiro_contato']) ? $_POST['data_primeiro_contato'] : null,
+                'passo_sequencia' => !empty($_POST['passo_sequencia']) ? (int)$_POST['passo_sequencia'] : null,
                 'cliente_nome' => trim($_POST['cliente_nome']),
                 'contato_nome' => trim($_POST['contato_nome'] ?? ''),
                 'contato_telefone' => trim($_POST['contato_telefone'] ?? ''),
@@ -136,5 +140,14 @@ class AgendaController {
             header('Location: ' . BASE_URL . '/?page=agenda&data_ref=' . urlencode($redirectDate) . $empresaParam);
             exit;
         }
+    }
+
+    public function ciclo_vida() {
+        requireAuth();
+        $id = (int)($_GET['id'] ?? 0);
+        $cadeia = AgendaSemanal::getCadeiaCicloVida($id);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'cadeia' => $cadeia]);
+        exit;
     }
 }

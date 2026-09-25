@@ -286,6 +286,10 @@ class Database {
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     vendedor_id INTEGER NOT NULL,
                     lead_id INTEGER,
+                    atividade_anterior_id INTEGER,
+                    ciclo_origem_id INTEGER,
+                    data_primeiro_contato DATE,
+                    passo_sequencia INTEGER DEFAULT 1,
                     cliente_nome VARCHAR(150) NOT NULL,
                     contato_nome VARCHAR(100),
                     contato_telefone VARCHAR(30),
@@ -299,8 +303,31 @@ class Database {
                     data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
                     data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (vendedor_id) REFERENCES users(id),
-                    FOREIGN KEY (lead_id) REFERENCES prospeccao_leads(id) ON DELETE SET NULL
+                    FOREIGN KEY (lead_id) REFERENCES prospeccao_leads(id) ON DELETE SET NULL,
+                    FOREIGN KEY (atividade_anterior_id) REFERENCES agenda_comercial_semanal(id),
+                    FOREIGN KEY (ciclo_origem_id) REFERENCES agenda_comercial_semanal(id)
                 )");
+
+                // Auto-migração para adicionar colunas de ciclo de vida se a tabela já existir
+                $colunasExistentes = [];
+                $stmtCols = self::$pdo->query("PRAGMA table_info(agenda_comercial_semanal)");
+                if ($stmtCols) {
+                    while ($col = $stmtCols->fetch(PDO::FETCH_ASSOC)) {
+                        $colunasExistentes[] = $col['name'];
+                    }
+                    if (!in_array('atividade_anterior_id', $colunasExistentes)) {
+                        self::$pdo->exec("ALTER TABLE agenda_comercial_semanal ADD COLUMN atividade_anterior_id INTEGER");
+                    }
+                    if (!in_array('ciclo_origem_id', $colunasExistentes)) {
+                        self::$pdo->exec("ALTER TABLE agenda_comercial_semanal ADD COLUMN ciclo_origem_id INTEGER");
+                    }
+                    if (!in_array('data_primeiro_contato', $colunasExistentes)) {
+                        self::$pdo->exec("ALTER TABLE agenda_comercial_semanal ADD COLUMN data_primeiro_contato DATE");
+                    }
+                    if (!in_array('passo_sequencia', $colunasExistentes)) {
+                        self::$pdo->exec("ALTER TABLE agenda_comercial_semanal ADD COLUMN passo_sequencia INTEGER DEFAULT 1");
+                    }
+                }
             } catch (PDOException $e) {
                 die("Erro de conexão com o banco de dados: " . $e->getMessage());
             }

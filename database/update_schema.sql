@@ -85,6 +85,10 @@ CREATE TABLE IF NOT EXISTS agenda_comercial_semanal (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     vendedor_id INTEGER NOT NULL,
     lead_id INTEGER,
+    atividade_anterior_id INTEGER,
+    ciclo_origem_id INTEGER,
+    data_primeiro_contato DATE,
+    passo_sequencia INTEGER DEFAULT 1,
     cliente_nome VARCHAR(150) NOT NULL,
     contato_nome VARCHAR(100),
     contato_telefone VARCHAR(30),
@@ -98,5 +102,7 @@ CREATE TABLE IF NOT EXISTS agenda_comercial_semanal (
     data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
     data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (vendedor_id) REFERENCES users(id),
-    FOREIGN KEY (lead_id) REFERENCES prospeccao_leads(id) ON DELETE SET NULL
+    FOREIGN KEY (lead_id) REFERENCES prospeccao_leads(id) ON DELETE SET NULL,
+    FOREIGN KEY (atividade_anterior_id) REFERENCES agenda_comercial_semanal(id),
+    FOREIGN KEY (ciclo_origem_id) REFERENCES agenda_comercial_semanal(id)
 );

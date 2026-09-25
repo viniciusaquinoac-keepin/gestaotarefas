@@ -185,10 +185,24 @@ $empresaNome = $empresa === 'Autoitec'
                                 </span>
                             </div>
 
-                            <!-- Nome do Cliente -->
+                            <!-- Nome do Cliente e Passo do Ciclo de Vida -->
                             <div class="fw-bold text-light mb-1 text-truncate" title="<?= htmlspecialchars($ativ['cliente_nome']) ?>">
                                 <?= htmlspecialchars($ativ['cliente_nome']) ?>
                             </div>
+
+                            <!-- Indicador de Sequência e Tempo de Vida do Lead -->
+                            <?php if (!empty($ativ['passo_sequencia']) && $ativ['passo_sequencia'] > 1): ?>
+                                <div class="d-flex align-items-center justify-content-between mb-1 py-1 px-2 rounded bg-dark border border-secondary" style="font-size: 0.70rem;">
+                                    <span class="text-info fw-bold">
+                                        <i class="bi bi-diagram-3-fill me-1"></i> Passo #<?= $ativ['passo_sequencia'] ?>
+                                    </span>
+                                    <?php if (!empty($ativ['dias_desde_inicio']) && $ativ['dias_desde_inicio'] > 0): ?>
+                                        <span class="text-secondary" title="Dias corridos desde a 1ª atividade deste cliente">
+                                            <i class="bi bi-stopwatch"></i> +<?= $ativ['dias_desde_inicio'] ?>d de ciclo
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
 
                             <!-- Contato / Telefone -->
                             <?php if (!empty($ativ['contato_nome']) || !empty($ativ['contato_telefone'])): ?>
@@ -215,6 +229,13 @@ $empresaNome = $empresa === 'Autoitec'
                                     <?= htmlspecialchars($ativ['resultado_obs']) ?>
                                 </div>
                             <?php endif; ?>
+
+                            <!-- Link para Visualizar Linha do Tempo / Ciclo Completo -->
+                            <div class="mb-1 text-end">
+                                <a href="javascript:void(0)" class="text-info text-decoration-none small" style="font-size: 0.71rem;" onclick="abrirModalJornada(<?= $ativ['id'] ?>)">
+                                    <i class="bi bi-clock-history me-1"></i> Ver Jornada Completa
+                                </a>
+                            </div>
 
                             <hr class="border-secondary my-1">
 
@@ -376,6 +397,66 @@ $empresaNome = $empresa === 'Autoitec'
             </div>
         </div>
 
+        <!-- Painel de Velocidade Comercial & Tempo de Vida Médio (Sales Cycle / Lead Time) -->
+        <div class="p-3 bg-dark border-top border-secondary">
+            <div class="row g-3 align-items-center">
+                <div class="col-lg-4 col-md-5">
+                    <div class="p-2 rounded bg-secondary bg-opacity-10 border border-secondary d-flex align-items-center gap-3">
+                        <div class="fs-1 text-warning"><i class="bi bi-stopwatch"></i></div>
+                        <div>
+                            <div class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Tempo Médio de Ciclo da Venda</div>
+                            <?php if (!empty($resumo['tempo_medio_fechamento'])): ?>
+                                <div class="fs-4 fw-bold text-warning">
+                                    <?= $resumo['tempo_medio_fechamento'] ?> <span class="fs-6 fw-normal text-light">dias</span>
+                                </div>
+                                <div class="text-secondary small" style="font-size: 0.72rem;">
+                                    Do 1º telefonema ao contrato (Mín: <?= $resumo['min_ciclo_fechamento'] ?>d | Máx: <?= $resumo['max_ciclo_fechamento'] ?>d • <?= $resumo['total_fechamentos_ciclo'] ?> fechamentos)
+                                </div>
+                            <?php else: ?>
+                                <div class="fs-6 fw-bold text-secondary">Aguardando fechamentos</div>
+                                <div class="text-secondary small" style="font-size: 0.72rem;">
+                                    Mede o tempo entre o contato telefônico inicial e o fechamento
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8 col-md-7">
+                    <div class="p-2 rounded bg-secondary bg-opacity-10 border border-secondary">
+                        <div class="text-secondary small fw-bold text-uppercase mb-2" style="letter-spacing: 0.5px;">
+                            <i class="bi bi-diagram-3-fill text-info me-1"></i> Régua Sequencial do Ciclo de Vida da Oportunidade
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-1 text-center" style="font-size: 0.73rem;">
+                            <div class="p-1 px-2 rounded bg-info bg-opacity-25 border border-info text-info">
+                                📞 1. Ligação
+                            </div>
+                            <i class="bi bi-arrow-right text-secondary"></i>
+                            <div class="p-1 px-2 rounded bg-primary bg-opacity-25 border border-primary text-light">
+                                🎯 2. Campo
+                            </div>
+                            <i class="bi bi-arrow-right text-secondary"></i>
+                            <div class="p-1 px-2 rounded bg-info bg-opacity-25 border border-info text-light">
+                                📋 3. Diagnóstico
+                            </div>
+                            <i class="bi bi-arrow-right text-secondary"></i>
+                            <div class="p-1 px-2 rounded bg-warning bg-opacity-25 border border-warning text-warning">
+                                📊 4. Apresentação
+                            </div>
+                            <i class="bi bi-arrow-right text-secondary"></i>
+                            <div class="p-1 px-2 rounded bg-purple bg-opacity-25 border text-light" style="border-color:#6f42c1 !important;">
+                                📄 5. Proposta
+                            </div>
+                            <i class="bi bi-arrow-right text-secondary"></i>
+                            <div class="p-1 px-2 rounded bg-success bg-opacity-25 border border-success text-success fw-bold">
+                                🏆 6. Fechamento
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -387,11 +468,24 @@ $empresaNome = $empresa === 'Autoitec'
         <div class="modal-content bg-dark text-light border-primary">
             <form action="<?= BASE_URL ?>/?page=agenda&action=create" method="POST">
                 <input type="hidden" name="empresa_filtro" value="<?= htmlspecialchars($empresa ?? '') ?>">
+                <input type="hidden" name="atividade_anterior_id" id="modal_atividade_anterior_id">
+                <input type="hidden" name="ciclo_origem_id" id="modal_ciclo_origem_id">
+                <input type="hidden" name="data_primeiro_contato" id="modal_data_primeiro_contato">
+                <input type="hidden" name="passo_sequencia" id="modal_passo_sequencia" value="1">
                 <div class="modal-header border-primary bg-primary bg-opacity-25">
                     <h5 class="modal-title text-light" id="modalNovoAgendamentoTitulo"><i class="bi bi-calendar-plus me-1"></i> Agendar Atividade Comercial</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <!-- Banner de Encadeamento de Sequência -->
+                    <div id="banner_sequencia_ciclo" class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center justify-content-between" style="display: none;">
+                        <div>
+                            <i class="bi bi-diagram-3-fill me-1"></i> <strong>Sequência Comercial Ativa</strong>
+                            <div class="small" id="banner_sequencia_texto">Continuando ciclo de vida do cliente</div>
+                        </div>
+                        <span class="badge bg-info text-dark" id="badge_passo_sequencia">Passo #2</span>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Empresa Alvo</label>
                         <select name="empresa_alvo" id="modal_empresa_alvo" class="form-select bg-dark text-light border-secondary" required>
@@ -613,7 +707,30 @@ function gerarSequenciaAtividade(ativ) {
         btnSalvar.textContent = 'Agendar Próxima Atividade';
     }
 
-    // 2. Preencher empresa e dados de contato
+    // 2. Informações de Encadeamento e Ciclo de Vida
+    const inputAntId = document.getElementById('modal_atividade_anterior_id');
+    const inputCicloId = document.getElementById('modal_ciclo_origem_id');
+    const inputDataPrim = document.getElementById('modal_data_primeiro_contato');
+    const inputPasso = document.getElementById('modal_passo_sequencia');
+    const bannerCiclo = document.getElementById('banner_sequencia_ciclo');
+    const badgePasso = document.getElementById('badge_passo_sequencia');
+    const bannerTexto = document.getElementById('banner_sequencia_texto');
+
+    const proxPasso = (parseInt(ativ.passo_sequencia) || 1) + 1;
+    const primData = ativ.data_primeiro_contato || ativ.data_agendada;
+
+    if (inputAntId) inputAntId.value = ativ.id;
+    if (inputCicloId) inputCicloId.value = ativ.ciclo_origem_id || ativ.id;
+    if (inputDataPrim) inputDataPrim.value = primData;
+    if (inputPasso) inputPasso.value = proxPasso;
+
+    if (bannerCiclo) {
+        bannerCiclo.style.display = 'flex';
+        if (badgePasso) badgePasso.textContent = 'Passo #' + proxPasso;
+        if (bannerTexto) bannerTexto.textContent = 'Cliente: ' + (ativ.cliente_nome || '') + ' • 1º Contato em ' + primData;
+    }
+
+    // 3. Preencher empresa e dados de contato
     if (document.getElementById('modal_empresa_alvo') && ativ.empresa_alvo) {
         document.getElementById('modal_empresa_alvo').value = ativ.empresa_alvo;
     }
@@ -627,7 +744,7 @@ function gerarSequenciaAtividade(ativ) {
         document.getElementById('modal_contato_telefone').value = ativ.contato_telefone || '';
     }
 
-    // 3. Vincular Lead se houver
+    // 4. Vincular Lead se houver
     const leadSelect = document.getElementById('modal_lead_id');
     const boxAtualizar = document.getElementById('box_atualizar_lead');
     if (leadSelect) {
@@ -651,16 +768,16 @@ function gerarSequenciaAtividade(ativ) {
         }
     }
 
-    // 4. Determinar próxima atividade recomendada no fluxo de vendas
-    // Ex: Já ligou -> agora vai apresentar proposta (ou apresentação)
+    // 5. Determinar próxima atividade recomendada no fluxo de vendas
+    // Ordem natural: Ligação -> Abordagem -> Diagnóstico -> Apresentação -> Proposta -> Fechamento
     const tipoSelect = document.getElementById('modal_tipo_atividade');
-    let proxAtiv = 'Proposta';
+    let proxAtiv = 'Abordagem';
     const tipoAnt = (ativ.tipo_atividade || '').toLowerCase();
 
     if (tipoAnt.includes('liga')) {
-        proxAtiv = 'Proposta';
+        proxAtiv = 'Abordagem'; // ligou -> vai em campo abordar ou apresentar proposta
     } else if (tipoAnt.includes('abord')) {
-        proxAtiv = 'Diagnostico';
+        proxAtiv = 'Apresentacao';
     } else if (tipoAnt.includes('diag') || tipoAnt.includes('spin')) {
         proxAtiv = 'Apresentacao';
     } else if (tipoAnt.includes('apres')) {
@@ -674,7 +791,7 @@ function gerarSequenciaAtividade(ativ) {
         tipoSelect.value = proxAtiv;
     }
 
-    // 5. Data sugerida
+    // 6. Data sugerida: hoje ou amanhã
     const hoje = new Date().toISOString().split('T')[0];
     const dataSug = (ativ.data_agendada && ativ.data_agendada >= hoje) ? ativ.data_agendada : hoje;
     if (document.getElementById('modal_data_agendada')) {
@@ -684,30 +801,117 @@ function gerarSequenciaAtividade(ativ) {
         document.getElementById('modal_horario_agendado').value = '14:00';
     }
 
-    // 6. Valor estimado se houver
+    // 7. Valor estimado se houver
     if (ativ.valor_estimado && ativ.valor_estimado > 0) {
         const valElem = document.getElementById('modal_valor_estimado');
         if (valElem) valElem.value = ativ.valor_estimado;
     }
 
-    // 7. Vendedor
+    // 8. Vendedor
     if (ativ.vendedor_id && document.getElementById('modal_vendedor_id')) {
         document.getElementById('modal_vendedor_id').value = ativ.vendedor_id;
     }
 
-    // 8. Observações de sequência
+    // 9. Observações de sequência
     const txtObs = document.getElementById('modal_resultado_obs');
     if (txtObs) {
-        let obsTxt = 'Sequência após ' + ativ.tipo_atividade + ' realizada.';
+        let obsTxt = 'Passo #' + proxPasso + ' após ' + ativ.tipo_atividade + ' realizada.';
         if (ativ.resultado_obs) {
             obsTxt += ' (Anterior: ' + ativ.resultado_obs + ')';
         }
         txtObs.value = obsTxt;
     }
 
-    // 9. Abrir Modal
+    // 10. Abrir Modal
     const modal = new bootstrap.Modal(document.getElementById('modalNovoAgendamento'));
     modal.show();
+}
+
+function abrirModalJornada(ativId) {
+    const modal = new bootstrap.Modal(document.getElementById('modalJornadaCliente'));
+    document.getElementById('jornadaLoading').style.display = 'block';
+    document.getElementById('jornadaContent').style.display = 'none';
+    modal.show();
+
+    fetch('<?= BASE_URL ?>/?page=agenda&action=ciclo_vida&id=' + ativId)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('jornadaLoading').style.display = 'none';
+            document.getElementById('jornadaContent').style.display = 'block';
+
+            if (!data.success || !data.cadeia || data.cadeia.length === 0) {
+                document.getElementById('jornadaTimelineItens').innerHTML = '<p class="text-secondary small fst-italic">Nenhum evento encadeado encontrado para esta oportunidade.</p>';
+                return;
+            }
+
+            const cadeia = data.cadeia;
+            const primeira = cadeia[0];
+            const ultima = cadeia[cadeia.length - 1];
+
+            document.getElementById('jornadaClienteNome').textContent = primeira.cliente_nome;
+            document.getElementById('jornadaLeadInfo').textContent = (primeira.empresa_alvo || 'Autoitec') + (primeira.contato_nome ? ' • Contato: ' + primeira.contato_nome : '');
+            
+            const diasTotais = ultima.dias_desde_inicio || 0;
+            document.getElementById('jornadaTempoTotal').textContent = diasTotais + (diasTotais === 1 ? ' dia de ciclo' : ' dias de ciclo comercial');
+            document.getElementById('jornadaTotalPassos').textContent = cadeia.length + (cadeia.length === 1 ? ' evento registrado' : ' eventos encadeados');
+
+            let html = '';
+            cadeia.forEach((item, idx) => {
+                let badgeClass = 'bg-secondary';
+                let iconClass = 'bi-circle-fill';
+                const t = (item.tipo_atividade || '').toLowerCase();
+
+                if (t.includes('liga')) { badgeClass = 'bg-info text-dark'; iconClass = 'bi-telephone-fill'; }
+                else if (t.includes('abord')) { badgeClass = 'bg-primary'; iconClass = 'bi-geo-alt-fill'; }
+                else if (t.includes('diag') || t.includes('spin')) { badgeClass = 'bg-info bg-opacity-75 text-dark'; iconClass = 'bi-search'; }
+                else if (t.includes('apres')) { badgeClass = 'bg-warning text-dark'; iconClass = 'bi-easel2-fill'; }
+                else if (t.includes('prop')) { badgeClass = 'bg-purple text-white'; iconClass = 'bi-file-earmark-text-fill'; }
+                else if (t.includes('fech')) { badgeClass = 'bg-success'; iconClass = 'bi-trophy-fill'; }
+
+                const isRealizado = (item.status_resultado === 'Realizado');
+                const statusBadge = isRealizado ? '<span class="badge bg-success small"><i class="bi bi-check2"></i> Realizado</span>' : '<span class="badge bg-secondary small">Planejado</span>';
+
+                html += `
+                    <div class="position-relative mb-4">
+                        <div class="position-absolute translate-middle-x" style="left: -25px; top: 2px;">
+                            <span class="badge rounded-circle p-2 ${badgeClass}">
+                                <i class="bi ${iconClass}"></i>
+                            </span>
+                        </div>
+                        <div class="card bg-dark border-secondary p-3 shadow-sm ms-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div>
+                                    <span class="badge ${badgeClass} me-2">${item.tipo_atividade}</span>
+                                    <span class="text-light fw-bold">Passo #${item.passo_sequencia || (idx + 1)}</span>
+                                    ${statusBadge}
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-dark border border-secondary text-secondary">
+                                        <i class="bi bi-calendar3 me-1"></i>${item.data_agendada} às ${item.horario_agendado}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="small text-secondary mb-1">
+                                Vendedor: <strong class="text-light">${item.vendedor_nome || 'Equipe'}</strong>
+                                ${item.valor_estimado > 0 ? ` • <span class="text-success fw-bold">R$ ${parseFloat(item.valor_estimado).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>` : ''}
+                            </div>
+                            ${item.resultado_obs ? `<div class="p-2 bg-secondary bg-opacity-10 rounded border border-secondary small text-light mt-1">${item.resultado_obs}</div>` : ''}
+                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-secondary small text-secondary" style="font-size: 0.72rem;">
+                                <span>${idx === 0 ? '🏁 Início do ciclo de vida' : `⏱️ +${item.dias_desde_anterior} dia(s) após a etapa anterior`}</span>
+                                <span>Total acumulado: <strong>${item.dias_desde_inicio} dia(s)</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('jornadaTimelineItens').innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById('jornadaLoading').style.display = 'none';
+            document.getElementById('jornadaContent').style.display = 'block';
+            document.getElementById('jornadaTimelineItens').innerHTML = '<div class="alert alert-danger small">Erro ao carregar histórico da jornada.</div>';
+        });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -726,7 +930,58 @@ document.addEventListener('DOMContentLoaded', function() {
             if (boxAtualizar) {
                 boxAtualizar.style.display = 'none';
             }
+            const bannerCiclo = document.getElementById('banner_sequencia_ciclo');
+            if (bannerCiclo) {
+                bannerCiclo.style.display = 'none';
+            }
+            // Resetar inputs de encadeamento
+            if (document.getElementById('modal_atividade_anterior_id')) document.getElementById('modal_atividade_anterior_id').value = '';
+            if (document.getElementById('modal_ciclo_origem_id')) document.getElementById('modal_ciclo_origem_id').value = '';
+            if (document.getElementById('modal_data_primeiro_contato')) document.getElementById('modal_data_primeiro_contato').value = '';
+            if (document.getElementById('modal_passo_sequencia')) document.getElementById('modal_passo_sequencia').value = '1';
         });
     }
 });
 </script>
+
+<!-- ========================================================================= -->
+<!-- MODAL LINHA DO TEMPO / JORNADA DO CLIENTE -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="modalJornadaCliente" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-light border-info">
+            <div class="modal-header border-info bg-info bg-opacity-25">
+                <h5 class="modal-title text-light" id="modalJornadaTitulo">
+                    <i class="bi bi-clock-history me-1 text-info"></i> Linha do Tempo & Ciclo de Vida da Oportunidade
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="jornadaLoading" class="text-center py-4">
+                    <div class="spinner-border text-info" role="status"></div>
+                    <p class="text-secondary small mt-2">Carregando jornada de eventos...</p>
+                </div>
+                <div id="jornadaContent" style="display: none;">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 p-3 bg-secondary bg-opacity-10 rounded border border-secondary gap-2">
+                        <div>
+                            <h5 class="text-light fw-bold mb-0" id="jornadaClienteNome">Cliente</h5>
+                            <small class="text-secondary" id="jornadaLeadInfo">Lead / Contato</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-warning text-dark fs-6" id="jornadaTempoTotal">0 dias de ciclo</span>
+                            <small class="text-secondary d-block mt-1" id="jornadaTotalPassos">0 eventos encadeados</small>
+                        </div>
+                    </div>
+
+                    <!-- Linha do Tempo Vertical -->
+                    <div class="timeline-container position-relative ps-4 border-start border-2 border-secondary ms-3" id="jornadaTimelineItens">
+                        <!-- Renderizado via JavaScript -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
